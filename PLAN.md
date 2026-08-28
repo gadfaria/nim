@@ -252,10 +252,16 @@ Menor é melhor; dentro da mesma camada vale a ordem alfabética.
 | 1 | prefixo de uma palavra | `cam` → Scanner de **Câm**era |
 | 2 | iniciais | `gm` → **G**oogle **M**aps |
 | 3 | contém | `ame` → C**âme**ra |
-| 4 | subsequência | `wpp` → **W**hats**Ap**p |
 
 A quebra em palavras separa corcovas de camelCase (`WhatsApp` → `whats`,`app`)
 mas não sequências de maiúsculas, para siglas como `YT` não virarem `Y`+`T`.
+É isso que faz `app` achar WhatsApp pela camada 1.
+
+**Houve uma quinta camada, de subsequência**, que fazia `wpp` achar WhatsApp.
+Foi removida. Ela arrastava resultado frouxo para a lista — `gm` trazia Gemini
+por `g`…`e`…`m` — e resultado frouxo quebra o abrir automático: a tela passava
+a mostrar dois nomes e abrir um. O plano original citava `wpp`; na prática o
+custo não pagou. Hoje se acha WhatsApp por `wha` ou `app`.
 
 Isso roda em `data/AppSearch.kt`, Kotlin puro sem nada de Android, porque os
 casos que importam dependem de apps que o emulador não tem — não dá pra
@@ -266,15 +272,14 @@ verificar `wpp` achando WhatsApp com `adb`. Os 10 testes em
 ./gradlew :app:testDebugUnitTest
 ```
 
-**Um resultado inequívoco abre o app sozinho**, depois de 150 ms sem digitação. O
+**Um único resultado abre o app sozinho**, depois de 150 ms sem digitação. O
 debounce é curto de propósito: só precisa cobrir o intervalo entre duas teclas
 de quem digita rápido, não dar tempo de pensar. Zerar dispararia no meio da
 palavra — `"gmail"` abriria já no `"gm"`.
 
-"Inequívoco" é **o único da melhor camada**, não "a lista inteira tem um
-item". A subsequência garante que a lista quase nunca fique com um só: `gm`
-traz Gmail (prefixo) *e* Gemini (`g`…`e`…`m`). Pela regra antiga o abrir
-automático teria morrido no dia em que o ranqueamento entrou.
+A regra é literal: **abre quando a busca reduziu a lista a um nome**. Sem
+escolher entre resultados visíveis — o que está na tela é o que abre. `ca`
+deixa Calendar e Camera e não abre nada; `cal` abre o Calendar.
 
 Duas armadilhas que isso cria, ambas fechadas:
 
