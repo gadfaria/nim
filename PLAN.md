@@ -162,7 +162,7 @@ app/src/main/java/com/gadfaria/nim/
 |---|---|---|
 | **M0** ✅ | Android Studio + SDK + emulador (API 37) | `adb devices` lista o emulador |
 | **M1** ✅ | Projeto Nim vira HOME app | Aperto HOME no emulador → escolho Nim → aparece minha tela |
-| **M2** | Gaveta com apps reais, A–Z | Lista completa, toque abre o app |
+| **M2** ✅ | Gaveta com apps reais, A–Z | Lista completa, toque abre o app |
 | **M3** | Busca | 2–3 letras filtram, Enter lança o primeiro resultado |
 | **M4** | Favoritos na home + relógio | Long press favorita, persiste após reiniciar |
 | **M5** | Polimento: gesto de swipe, tema escuro, transições | Uso ele no dia a dia sem irritação |
@@ -209,11 +209,33 @@ adb wait-for-device
 
 ## Próximo passo
 
-**M2** — gaveta com os apps reais. `AppRepository` sobre `LauncherApps`
-(+ `Callback` de install/uninstall), lista A–Z e toque para lançar via
-`startMainActivity`.
+**M3** — busca. Normalizar (minúsculas + remover acentos) e ranquear
+prefixo > iniciais > contém, com Enter lançando o primeiro resultado.
 
 ---
+
+## O que o M2 acrescentou
+
+`LauncherApps` em vez de `PackageManager.queryIntentActivities` — a diferença
+aparece em três pontos:
+
+- **`profiles`** dá os perfis de trabalho. O mesmo `ComponentName` pode existir
+  duas vezes, um por perfil, e lançar no perfil errado abre o app errado. Por
+  isso o `UserHandle` entra na chave do `AppInfo`, não só o componente.
+- **`Callback`** avisa de instalação, desinstalação e renomeação. Verificado no
+  emulador: desabilitei o YouTube com a gaveta aberta e ele sumiu da lista sem
+  nenhum toque. Um launcher que só lê a lista no `onCreate` mostra apps que já
+  não existem.
+- **`startMainActivity`** recebe `sourceBounds`, então a animação de abertura
+  sai do item tocado em vez do centro da tela. Os bounds vêm do
+  `onGloballyPositioned` da linha.
+
+A ordenação usa `Collator` com força PRIMARY: um sort por código de caractere
+jogaria "Câmera" depois de "Z".
+
+O gesto vertical (sobe abre, desce fecha) é o mínimo pra gaveta ser usável
+agora; a transição de verdade é do M5. Fechar também acontece pelo botão
+voltar e por apertar HOME dentro do Nim — este último devolve o scroll ao topo.
 
 ## Notas de build
 
@@ -237,5 +259,6 @@ adb wait-for-device
 
 ## Pendências conhecidas (para o M5)
 
-- Nenhuma aberta. (A pendência de contraste da barra de status morreu junto com
-  o papel de parede — com fundo sólido os ícones são sempre claros.)
+- A troca home ⇄ gaveta é um `Crossfade`, que dissolve as duas telas ao mesmo
+  tempo — durante a transição dá pra ler a lista de apps por trás do relógio.
+  Funciona, mas é feio para um launcher que se vende como limpo.
