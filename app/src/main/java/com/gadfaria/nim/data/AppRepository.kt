@@ -6,6 +6,7 @@ import android.content.pm.LauncherApps
 import android.graphics.Rect
 import android.net.Uri
 import android.os.Handler
+import android.os.Process
 import android.os.Looper
 import android.os.UserHandle
 import android.os.UserManager
@@ -35,12 +36,23 @@ class AppRepository(context: Context) {
     private val userManager =
         context.getSystemService(Context.USER_SERVICE) as UserManager
 
+    /**
+     * O perfil em que o próprio launcher roda. Tudo que vier de outro perfil é
+     * trabalho — é o jeito público de fazer essa distinção, já que
+     * UserManager.isManagedProfile(id) não é API aberta.
+     */
+    private val myUser = Process.myUserHandle()
+
     // Ordenação alfabética de verdade: Collator põe "Câmera" junto de "Camera"
     // e não depois de "Z", que é o que um sort por código de caractere faria.
     private val collator = Collator.getInstance().apply { strength = Collator.PRIMARY }
 
     private val byLabel = Comparator<AppInfo> { a, b ->
         collator.compare(a.label, b.label).takeIf { it != 0 }
+        // Mesmo nome nos dois perfis é o caso comum (Gmail, Drive, Agenda):
+        // o pessoal vem primeiro, sempre. Desempatar por ComponentName deixava
+        // a ordem arbitrária entre os dois "Gmail" da lista.
+            ?: a.isWork.compareTo(b.isWork).takeIf { it != 0 }
             ?: a.componentName.compareTo(b.componentName)
     }
 
@@ -84,6 +96,7 @@ class AppRepository(context: Context) {
                             componentName = activity.componentName,
                             user = user,
                             userSerial = serial,
+                            isWork = user != myUser,
                         )
                     }
             }
