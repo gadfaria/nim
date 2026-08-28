@@ -64,7 +64,7 @@ private fun rememberCurrentTime(): State<LocalDateTime> {
 fun HomeScreen(
     favorites: List<AppInfo>,
     onLaunch: (AppInfo, Rect?) -> Unit,
-    onToggleFavorite: (AppInfo) -> Unit,
+    onOpenMenu: (AppInfo, Rect?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -84,8 +84,10 @@ fun HomeScreen(
         favorites.forEach { app ->
             AppRow(
                 app = app,
+                // Tudo aqui é favorito por definição: o ponto seria ruído.
+                isFavorite = false,
                 onLaunch = onLaunch,
-                onToggleFavorite = onToggleFavorite,
+                onOpenMenu = onOpenMenu,
             )
         }
 

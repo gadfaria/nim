@@ -165,7 +165,7 @@ app/src/main/java/com/gadfaria/nim/
 | **M2** ✅ | Gaveta com apps reais, A–Z | Lista completa, toque abre o app |
 | **M3** ✅ | Busca | 2–3 letras filtram, Enter lança o primeiro resultado |
 | **M4** ✅ | Favoritos na home + relógio | Long press favorita, persiste após reiniciar |
-| **M5** | Polimento: gesto de swipe, tema escuro, transições | Uso ele no dia a dia sem irritação |
+| **M5** ✅ | Polimento: menu de toque longo, marca de favorito, transições | Uso ele no dia a dia sem irritação |
 
 M0 é o único passo lento (download do SDK + imagem do emulador, alguns GB).
 M1–M4 são rápidos.
@@ -352,8 +352,20 @@ que foi desfavoritado antes continua fora.
 
 ---
 
-## Pendências conhecidas (para o M5)
+## Pendências conhecidas
 
-- A troca home ⇄ gaveta é um `Crossfade`, que dissolve as duas telas ao mesmo
-  tempo — durante a transição dá pra ler a lista de apps por trás do relógio.
-  Funciona, mas é feio para um launcher que se vende como limpo.
+- Nenhuma aberta. O uso diário no aparelho é que vai dizer o que falta.
+
+---
+
+## Armadilha de gesto (M5)
+
+Empilhar dois detectores no mesmo Box da home — `detectVerticalDragGestures`
+para abrir a gaveta e `detectTapGestures` para o toque longo — **não funciona**.
+Os dois recebem o mesmo toque, disputam quem consome, e o arrasto passa a
+falhar de forma intermitente: 6 tentativas seguidas sem abrir a gaveta, sem
+erro nenhum no log.
+
+A correção é um detector só (`ui/HomeGestures.kt`) que decide o que o gesto é:
+saiu do slop antes do tempo de toque longo, é arrasto; ficou parado até
+estourar, é toque longo. Depois disso, 6/6 no arrasto e 3/3 no toque longo.

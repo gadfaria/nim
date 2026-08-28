@@ -2,16 +2,22 @@ package com.gadfaria.nim.ui
 
 import android.graphics.Rect
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
@@ -55,13 +61,19 @@ fun NimApp(
     val unambiguous by viewModel.unambiguousMatch.collectAsStateWithLifecycle()
     val screen by viewModel.screen.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
+    val favoriteKeys by viewModel.favoriteKeys.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
     val keyboard = LocalSoftwareKeyboardController.current
     val searchFocus = remember { FocusRequester() }
 
+    // App do menu de toque longo, se algum estiver aberto. Guarda os bounds
+    // junto porque as ações do menu também animam a partir da linha tocada.
+    var menuApp by remember { mutableStateOf<Pair<AppInfo, Rect?>?>(null) }
+
     fun goHome() {
         keyboard?.hide()
+        menuApp = null
         viewModel.goHome()
     }
 
@@ -140,7 +152,28 @@ fun NimApp(
         }
     }
 
-    Crossfade(targetState = screen, label = "telas") { current ->
+    AnimatedContent(
+        targetState = screen,
+        // Crossfade dissolvia as duas telas ao mesmo tempo e dava pra ler a
+        // lista de apps por trás do relógio. Aqui a que sai termina antes de a
+        // que entra aparecer, e a gaveta desliza na direção do próprio gesto.
+        transitionSpec = {
+            when {
+                targetState == Screen.DRAWER ->
+                    (slideInVertically(tween(240)) { it / 8 } +
+                        fadeIn(tween(180, delayMillis = 60))) togetherWith
+                        fadeOut(tween(140))
+
+                initialState == Screen.DRAWER ->
+                    fadeIn(tween(200, delayMillis = 100)) togetherWith
+                        (slideOutVertically(tween(220)) { it / 8 } + fadeOut(tween(180)))
+
+                else ->
+                    fadeIn(tween(200, delayMillis = 100)) togetherWith fadeOut(tween(140))
+            }
+        },
+        label = "telas",
+    ) { current ->
         when (current) {
             Screen.DRAWER -> Box(
                 modifier = modifier
@@ -152,7 +185,11 @@ fun NimApp(
                     query = query,
                     onQueryChange = viewModel::onQueryChange,
                     onLaunch = ::launchAndClose,
-                    onToggleFavorite = viewModel::toggleFavorite,
+                    favoriteKeys = favoriteKeys,
+                    onOpenMenu = { app, bounds ->
+                        keyboard?.hide()
+                        menuApp = app to bounds
+                    },
                     searchFocusRequester = searchFocus,
                     listState = listState,
                 )
@@ -164,31 +201,50 @@ fun NimApp(
                 modifier = modifier.fillMaxSize(),
             )
 
+            // Segurar no vazio da home abre as configurações — a convenção de
+            // launcher. Sobre um favorito não dispara: a linha consome o toque
+            // longo antes, pro menu.
             Screen.HOME -> Box(
                 modifier = modifier
                     .fillMaxSize()
-                    .pointerInput(threshold) {
-                        var dragged = 0f
-                        detectVerticalDragGestures(
-                            onDragStart = { dragged = 0f },
-                            onDragEnd = {
-                                if (dragged < -threshold) viewModel.openDrawer()
-                            },
-                        ) { _, delta -> dragged += delta }
-                    }
-                    // Segurar no vazio da home abre as configurações — a
-                    // convenção de launcher. Sobre um favorito não dispara:
-                    // a linha consome o toque longo antes, pra favoritar.
-                    .pointerInput(Unit) {
-                        detectTapGestures(onLongPress = { viewModel.openSettings() })
-                    }
+                    .homeGestures(
+                        swipeUpThresholdPx = threshold,
+                        onSwipeUp = viewModel::openDrawer,
+                        onLongPress = viewModel::openSettings,
+                    )
             ) {
                 HomeScreen(
                     favorites = favorites,
                     onLaunch = viewModel::launch,
-                    onToggleFavorite = viewModel::toggleFavorite,
+                    onOpenMenu = { app, bounds ->
+                        keyboard?.hide()
+                        menuApp = app to bounds
+                    },
                 )
             }
         }
+    }
+
+    menuApp?.let { (app, bounds) ->
+        // Voltar fecha o menu antes de mexer na tela de baixo.
+        BackHandler { menuApp = null }
+
+        AppMenu(
+            app = app,
+            isFavorite = app.key in favoriteKeys,
+            onToggleFavorite = {
+                viewModel.toggleFavorite(app)
+                menuApp = null
+            },
+            onAppInfo = {
+                viewModel.openAppInfo(app, bounds)
+                menuApp = null
+            },
+            onUninstall = {
+                viewModel.requestUninstall(app)
+                menuApp = null
+            },
+            onDismiss = { menuApp = null },
+        )
     }
 }
