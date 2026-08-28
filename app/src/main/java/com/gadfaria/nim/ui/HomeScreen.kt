@@ -4,10 +4,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Rect
 import android.text.format.DateFormat
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.gadfaria.nim.data.AppInfo
 import com.gadfaria.nim.ui.theme.NimForegroundMuted
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -58,7 +61,40 @@ private fun rememberCurrentTime(): State<LocalDateTime> {
 }
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(
+    favorites: List<AppInfo>,
+    onLaunch: (AppInfo, Rect?) -> Unit,
+    onToggleFavorite: (AppInfo) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 28.dp),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        // Relógio no terço superior, favoritos embaixo: é onde o polegar
+        // alcança sem reposicionar a mão.
+        Spacer(Modifier.weight(1f))
+
+        Clock()
+
+        Spacer(Modifier.weight(2f))
+
+        favorites.forEach { app ->
+            AppRow(
+                app = app,
+                onLaunch = onLaunch,
+                onToggleFavorite = onToggleFavorite,
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun Clock() {
     val now by rememberCurrentTime()
     val context = LocalContext.current
     val locale = Locale.getDefault()
@@ -71,22 +107,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
     val dateFormat = remember(locale) { DateTimeFormatter.ofPattern("EEE, d MMM", locale) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 28.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.Start,
-    ) {
-        Text(
-            text = now.format(hourFormat),
-            style = MaterialTheme.typography.displayLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Text(
-            text = now.format(dateFormat),
-            style = MaterialTheme.typography.bodyLarge,
-            color = NimForegroundMuted,
-        )
-    }
+    Text(
+        text = now.format(hourFormat),
+        style = MaterialTheme.typography.displayLarge,
+        color = MaterialTheme.colorScheme.onBackground,
+    )
+    Text(
+        text = now.format(dateFormat),
+        style = MaterialTheme.typography.bodyLarge,
+        color = NimForegroundMuted,
+    )
 }

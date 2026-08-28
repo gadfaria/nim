@@ -52,6 +52,7 @@ fun NimApp(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val unambiguous by viewModel.unambiguousMatch.collectAsStateWithLifecycle()
     val drawerOpen by viewModel.drawerOpen.collectAsStateWithLifecycle()
+    val favorites by viewModel.favorites.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
     val keyboard = LocalSoftwareKeyboardController.current
@@ -148,6 +149,7 @@ fun NimApp(
                     query = query,
                     onQueryChange = viewModel::onQueryChange,
                     onLaunch = ::launchAndClose,
+                    onToggleFavorite = viewModel::toggleFavorite,
                     searchFocusRequester = searchFocus,
                     listState = listState,
                 )
@@ -166,7 +168,11 @@ fun NimApp(
                         ) { _, delta -> dragged += delta }
                     }
             ) {
-                HomeScreen()
+                HomeScreen(
+                    favorites = favorites,
+                    onLaunch = viewModel::launch,
+                    onToggleFavorite = viewModel::toggleFavorite,
+                )
             }
         }
     }

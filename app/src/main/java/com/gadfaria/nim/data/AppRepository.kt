@@ -6,6 +6,7 @@ import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
 import android.os.UserHandle
+import android.os.UserManager
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -26,6 +27,9 @@ class AppRepository(context: Context) {
 
     private val launcherApps =
         context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+
+    private val userManager =
+        context.getSystemService(Context.USER_SERVICE) as UserManager
 
     // Ordenação alfabética de verdade: Collator põe "Câmera" junto de "Camera"
     // e não depois de "Z", que é o que um sort por código de caractere faria.
@@ -65,6 +69,7 @@ class AppRepository(context: Context) {
     private fun load(): List<AppInfo> =
         launcherApps.profiles
             .flatMap { user ->
+                val serial = userManager.getSerialNumberForUser(user)
                 // Pode falhar se o perfil sumir ou entrar em modo silencioso
                 // entre o callback e a leitura.
                 runCatching { launcherApps.getActivityList(null, user) }
@@ -74,6 +79,7 @@ class AppRepository(context: Context) {
                             label = activity.label.toString(),
                             componentName = activity.componentName,
                             user = user,
+                            userSerial = serial,
                         )
                     }
             }

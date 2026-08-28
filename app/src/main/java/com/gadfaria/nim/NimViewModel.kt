@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.gadfaria.nim.data.AppInfo
 import com.gadfaria.nim.data.AppRepository
 import com.gadfaria.nim.data.RankResult
+import com.gadfaria.nim.data.Settings
 import com.gadfaria.nim.data.normalizeForSearch
 import com.gadfaria.nim.data.rankBySearch
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,10 +17,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class NimViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = AppRepository(application)
+    private val settings = Settings(application)
 
     private val allApps: StateFlow<List<AppInfo>> = repository.apps.stateIn(
         scope = viewModelScope,
@@ -55,6 +58,28 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
     val unambiguousMatch: StateFlow<AppInfo?> = ranked
         .map { it.unambiguous }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /**
+     * Favoritos resolvidos para apps, na ordem em que foram favoritados.
+     *
+     * Chave sem app correspondente é ignorada, não apagada: um app pode estar
+     * temporariamente indisponível (perfil de trabalho em modo silencioso,
+     * atualização em curso) e apagar o favorito aí perderia a escolha do
+     * usuário por um sumiço passageiro.
+     */
+    val favorites: StateFlow<List<AppInfo>> =
+        combine(allApps, settings.favoriteKeys) { apps, keys ->
+            val byKey = apps.associateBy { it.key }
+            keys.mapNotNull { byKey[it] }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val favoriteKeys: StateFlow<Set<String>> = settings.favoriteKeys
+        .map { it.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+    fun toggleFavorite(app: AppInfo) {
+        viewModelScope.launch { settings.toggleFavorite(app.key) }
+    }
 
     private val _drawerOpen = MutableStateFlow(false)
     val drawerOpen: StateFlow<Boolean> = _drawerOpen.asStateFlow()

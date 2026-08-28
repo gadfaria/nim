@@ -17,9 +17,17 @@ data class AppInfo(
     val label: String,
     val componentName: ComponentName,
     val user: UserHandle,
+    val userSerial: Long,
 ) {
-    /** Estável entre recarregamentos; serve de chave nas listas do Compose. */
-    val key: String = "${componentName.flattenToShortString()}@${user.hashCode()}"
+    /**
+     * Identidade do app entre reinícios — é ela que vai pro disco na lista de
+     * favoritos.
+     *
+     * O serial vem de UserManager, não de `user.hashCode()`: hashCode não tem
+     * contrato de estabilidade, e um favorito que aponta pro perfil errado
+     * depois de um reboot é um bug silencioso.
+     */
+    val key: String = "${componentName.flattenToShortString()}#$userSerial"
 
     /**
      * Preparado uma vez no carregamento, não a cada tecla. Num aparelho com
