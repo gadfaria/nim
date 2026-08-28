@@ -163,7 +163,7 @@ app/src/main/java/com/gadfaria/nim/
 | **M0** ✅ | Android Studio + SDK + emulador (API 37) | `adb devices` lista o emulador |
 | **M1** ✅ | Projeto Nim vira HOME app | Aperto HOME no emulador → escolho Nim → aparece minha tela |
 | **M2** ✅ | Gaveta com apps reais, A–Z | Lista completa, toque abre o app |
-| **M3** | Busca | 2–3 letras filtram, Enter lança o primeiro resultado |
+| **M3** 🔶 | Busca | 2–3 letras filtram, Enter lança o primeiro resultado — feito; falta o ranqueamento |
 | **M4** | Favoritos na home + relógio | Long press favorita, persiste após reiniciar |
 | **M5** | Polimento: gesto de swipe, tema escuro, transições | Uso ele no dia a dia sem irritação |
 
@@ -209,8 +209,9 @@ adb wait-for-device
 
 ## Próximo passo
 
-**M3** — busca. Normalizar (minúsculas + remover acentos) e ranquear
-prefixo > iniciais > contém, com Enter lançando o primeiro resultado.
+**M3, o que falta** — ranquear os resultados: prefixo > iniciais > contém.
+Hoje o filtro é só "contém", então `"g"` traz Messages e Settings junto com
+Gmail. `"wpp"` ainda não acha "WhatsApp" — isso depende das iniciais.
 
 ---
 
@@ -236,6 +237,33 @@ jogaria "Câmera" depois de "Z".
 O gesto vertical (sobe abre, desce fecha) é o mínimo pra gaveta ser usável
 agora; a transição de verdade é do M5. Fechar também acontece pelo botão
 voltar e por apertar HOME dentro do Nim — este último devolve o scroll ao topo.
+
+## Busca e o abrir automático
+
+O campo fica no topo da gaveta, recebe foco e abre o teclado junto com ela: a
+gaveta existe para digitar, não para rolar 300 nomes.
+
+**Um resultado só abre o app sozinho**, depois de 350 ms sem digitação. O
+debounce não é enfeite — sem ele `"gmail"` dispara já no `"gm"`, e o launcher
+parece afobado.
+
+Duas armadilhas que isso cria, ambas fechadas:
+
+- **O laço.** Se a busca sobrevivesse ao lançamento, voltar do app reabriria a
+  gaveta com um resultado só e dispararia de novo, prendendo o usuário. Por
+  isso lançar *sempre* fecha a gaveta e limpa a busca — inclusive no toque
+  normal e no Enter.
+- **A rolagem reancorada.** A `LazyColumn` com `key` mantém no topo o item que
+  lá estava quando o conteúdo muda. Filtrando até sobrar um app, ele vira a
+  âncora; ao limpar a busca a lista tenta mantê-lo no topo e bate no fim da
+  rolagem — a gaveta reabria no meio do alfabeto. O reset de rolagem tem que
+  acontecer **na abertura e a cada mudança da busca**, nunca no fechamento: ali
+  ele roda antes da reancoragem e é desfeito por ela.
+
+A normalização (minúsculas, sem acento) é calculada uma vez por app no
+carregamento, não a cada tecla — com centenas de apps, normalizar a lista
+inteira por caractere digitado é a diferença entre busca instantânea e busca
+engasgada.
 
 ## Notas de build
 

@@ -1,5 +1,6 @@
 package com.gadfaria.nim.ui
 
+import android.graphics.Rect
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -10,25 +11,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gadfaria.nim.NimViewModel
+import com.gadfaria.nim.data.AppInfo
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
+
+/**
+ * Espera o usuário parar de digitar antes de abrir sozinho. Sem isso, "gmail"
+ * dispara no "gm" — funciona, mas dá a sensação de que o launcher tem pressa.
+ */
+private const val AUTO_LAUNCH_DELAY_MS = 350L
 
 /**
  * Host da home e da gaveta. A troca é por gesto vertical: sobe abre, desce fecha.
  *
- * O gesto aqui é o mínimo que torna o M2 usável — a transição animada de
+ * O gesto aqui é o mínimo que torna a gaveta usável — a transição animada de
  * verdade é assunto do M5.
  */
 @Composable
@@ -37,15 +46,54 @@ fun NimApp(
     homePresses: Flow<Unit>,
     modifier: Modifier = Modifier,
 ) {
-    val apps by viewModel.apps.collectAsStateWithLifecycle()
+    val apps by viewModel.visibleApps.collectAsStateWithLifecycle()
+    val query by viewModel.query.collectAsStateWithLifecycle()
     val drawerOpen by viewModel.drawerOpen.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
+    val keyboard = LocalSoftwareKeyboardController.current
+    val searchFocus = remember { FocusRequester() }
 
     fun closeDrawer() {
+        keyboard?.hide()
         viewModel.closeDrawer()
-        scope.launch { listState.scrollToItem(0) }
+    }
+
+    // Lançar SEMPRE fecha a gaveta e limpa a busca. Se a busca sobrevivesse ao
+    // lançamento, voltar do app reabriria a gaveta com um resultado só e o
+    // auto-abrir dispararia de novo: o usuário ficaria preso num laço.
+    fun launchAndClose(app: AppInfo, bounds: Rect?) {
+        viewModel.launch(app, bounds)
+        closeDrawer()
+    }
+
+    // Abriu a gaveta: foco no campo e teclado na tela. A gaveta é para digitar,
+    // não para rolar 300 nomes.
+    LaunchedEffect(drawerOpen) {
+        if (drawerOpen) {
+            searchFocus.requestFocus()
+            keyboard?.show()
+        }
+    }
+
+    // A lista sempre começa do topo: ao abrir e a cada mudança da busca.
+    //
+    // Isto NÃO pode ser feito no fechamento. A LazyColumn com `key` reancora a
+    // rolagem no item que estava no topo quando o conteúdo muda: filtrando até
+    // sobrar um app, ele vira a âncora, e ao limpar a busca a lista tenta
+    // mantê-lo no topo, batendo no fim da rolagem. Um scrollToItem(0) disparado
+    // antes dessa reancoragem é simplesmente desfeito por ela.
+    LaunchedEffect(drawerOpen, query) {
+        if (drawerOpen) listState.scrollToItem(0)
+    }
+
+    // Um único resultado abre sozinho. As chaves do efeito são a busca e a
+    // lista: mudou qualquer uma, o timer reinicia — é isso que faz o debounce.
+    LaunchedEffect(drawerOpen, query, apps) {
+        if (!drawerOpen || query.isBlank()) return@LaunchedEffect
+        val only = apps.singleOrNull() ?: return@LaunchedEffect
+        delay(AUTO_LAUNCH_DELAY_MS)
+        launchAndClose(only, null)
     }
 
     // Apertar HOME já estando no Nim volta pra home limpa. Sem isto o usuário
@@ -93,7 +141,10 @@ fun NimApp(
             ) {
                 DrawerScreen(
                     apps = apps,
-                    onLaunch = viewModel::launch,
+                    query = query,
+                    onQueryChange = viewModel::onQueryChange,
+                    onLaunch = ::launchAndClose,
+                    searchFocusRequester = searchFocus,
                     listState = listState,
                 )
             }
