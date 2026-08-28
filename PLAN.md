@@ -243,9 +243,10 @@ voltar e por apertar HOME dentro do Nim — este último devolve o scroll ao top
 O campo fica no topo da gaveta, recebe foco e abre o teclado junto com ela: a
 gaveta existe para digitar, não para rolar 300 nomes.
 
-**Um resultado só abre o app sozinho**, depois de 350 ms sem digitação. O
-debounce não é enfeite — sem ele `"gmail"` dispara já no `"gm"`, e o launcher
-parece afobado.
+**Um resultado só abre o app sozinho**, depois de 150 ms sem digitação. O
+debounce é curto de propósito: só precisa cobrir o intervalo entre duas teclas
+de quem digita rápido, não dar tempo de pensar. Zerar dispararia no meio da
+palavra — `"gmail"` abriria já no `"gm"`.
 
 Duas armadilhas que isso cria, ambas fechadas:
 
