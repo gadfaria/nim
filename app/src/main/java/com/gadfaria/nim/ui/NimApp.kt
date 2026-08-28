@@ -29,10 +29,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Espera o usuário parar de digitar antes de abrir sozinho. Sem isso, "gmail"
- * dispara no "gm" — funciona, mas dá a sensação de que o launcher tem pressa.
+ * Espera o usuário parar de digitar antes de abrir sozinho. Curto de propósito:
+ * só precisa cobrir o intervalo entre duas teclas de quem digita rápido, não
+ * dar tempo de pensar. Zerar dispara no meio de uma palavra — "gmail" abriria
+ * já no "gm".
  */
-private const val AUTO_LAUNCH_DELAY_MS = 350L
+private const val AUTO_LAUNCH_DELAY_MS = 150L
 
 /**
  * Host da home e da gaveta. A troca é por gesto vertical: sobe abre, desce fecha.
