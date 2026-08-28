@@ -6,12 +6,15 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.gadfaria.nim.data.AppInfo
 import com.gadfaria.nim.data.AppRepository
+import com.gadfaria.nim.data.RankResult
 import com.gadfaria.nim.data.normalizeForSearch
+import com.gadfaria.nim.data.rankBySearch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class NimViewModel(application: Application) : AndroidViewModel(application) {
@@ -29,19 +32,29 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
 
-    /**
-     * Filtro por "contém", ainda sem ranqueamento — prefixo > iniciais > contém
-     * é o M3. Aqui só interessa reduzir a lista.
-     */
-    val visibleApps: StateFlow<List<AppInfo>> =
+    private val ranked: StateFlow<RankResult<AppInfo>> =
         combine(allApps, _query) { apps, query ->
-            val term = normalizeForSearch(query.trim())
-            if (term.isEmpty()) apps else apps.filter { term in it.normalizedLabel }
+            rankBySearch(apps, normalizeForSearch(query.trim())) { it.searchable }
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList(),
+            initialValue = RankResult(emptyList(), null),
         )
+
+    val visibleApps: StateFlow<List<AppInfo>> = ranked
+        .map { it.items }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * O app a abrir sozinho: único na melhor camada do ranqueamento.
+     *
+     * Não é "a lista inteira tem um item". Com subsequência na busca, "gm" traz
+     * Gmail (prefixo) e Gemini (g...m) — a lista tem dois, mas só um é o
+     * resultado óbvio, e é ele que deve abrir.
+     */
+    val unambiguousMatch: StateFlow<AppInfo?> = ranked
+        .map { it.unambiguous }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _drawerOpen = MutableStateFlow(false)
     val drawerOpen: StateFlow<Boolean> = _drawerOpen.asStateFlow()

@@ -50,6 +50,7 @@ fun NimApp(
 ) {
     val apps by viewModel.visibleApps.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
+    val unambiguous by viewModel.unambiguousMatch.collectAsStateWithLifecycle()
     val drawerOpen by viewModel.drawerOpen.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
@@ -89,13 +90,14 @@ fun NimApp(
         if (drawerOpen) listState.scrollToItem(0)
     }
 
-    // Um único resultado abre sozinho. As chaves do efeito são a busca e a
-    // lista: mudou qualquer uma, o timer reinicia — é isso que faz o debounce.
-    LaunchedEffect(drawerOpen, query, apps) {
+    // Um resultado inequívoco abre sozinho. As chaves do efeito são a busca e o
+    // próprio resultado: mudou qualquer um, o timer reinicia — é isso que faz o
+    // debounce, sem precisar de operador de flow.
+    LaunchedEffect(drawerOpen, query, unambiguous) {
         if (!drawerOpen || query.isBlank()) return@LaunchedEffect
-        val only = apps.singleOrNull() ?: return@LaunchedEffect
+        val target = unambiguous ?: return@LaunchedEffect
         delay(AUTO_LAUNCH_DELAY_MS)
-        launchAndClose(only, null)
+        launchAndClose(target, null)
     }
 
     // Apertar HOME já estando no Nim volta pra home limpa. Sem isto o usuário

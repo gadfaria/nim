@@ -163,7 +163,7 @@ app/src/main/java/com/gadfaria/nim/
 | **M0** ✅ | Android Studio + SDK + emulador (API 37) | `adb devices` lista o emulador |
 | **M1** ✅ | Projeto Nim vira HOME app | Aperto HOME no emulador → escolho Nim → aparece minha tela |
 | **M2** ✅ | Gaveta com apps reais, A–Z | Lista completa, toque abre o app |
-| **M3** 🔶 | Busca | 2–3 letras filtram, Enter lança o primeiro resultado — feito; falta o ranqueamento |
+| **M3** ✅ | Busca | 2–3 letras filtram, Enter lança o primeiro resultado |
 | **M4** | Favoritos na home + relógio | Long press favorita, persiste após reiniciar |
 | **M5** | Polimento: gesto de swipe, tema escuro, transições | Uso ele no dia a dia sem irritação |
 
@@ -209,9 +209,8 @@ adb wait-for-device
 
 ## Próximo passo
 
-**M3, o que falta** — ranquear os resultados: prefixo > iniciais > contém.
-Hoje o filtro é só "contém", então `"g"` traz Messages e Settings junto com
-Gmail. `"wpp"` ainda não acha "WhatsApp" — isso depende das iniciais.
+**M4** — favoritos na home. Long press na gaveta favorita, DataStore persiste,
+e a home passa a listar os favoritos abaixo do relógio.
 
 ---
 
@@ -243,10 +242,39 @@ voltar e por apertar HOME dentro do Nim — este último devolve o scroll ao top
 O campo fica no topo da gaveta, recebe foco e abre o teclado junto com ela: a
 gaveta existe para digitar, não para rolar 300 nomes.
 
-**Um resultado só abre o app sozinho**, depois de 150 ms sem digitação. O
+### As camadas do ranqueamento
+
+Menor é melhor; dentro da mesma camada vale a ordem alfabética.
+
+| # | Camada | Exemplo |
+|---|---|---|
+| 0 | prefixo do rótulo | `cam` → **Câmera** |
+| 1 | prefixo de uma palavra | `cam` → Scanner de **Câm**era |
+| 2 | iniciais | `gm` → **G**oogle **M**aps |
+| 3 | contém | `ame` → C**âme**ra |
+| 4 | subsequência | `wpp` → **W**hats**Ap**p |
+
+A quebra em palavras separa corcovas de camelCase (`WhatsApp` → `whats`,`app`)
+mas não sequências de maiúsculas, para siglas como `YT` não virarem `Y`+`T`.
+
+Isso roda em `data/AppSearch.kt`, Kotlin puro sem nada de Android, porque os
+casos que importam dependem de apps que o emulador não tem — não dá pra
+verificar `wpp` achando WhatsApp com `adb`. Os 10 testes em
+`app/src/test/.../AppSearchTest.kt` cobrem cada camada:
+
+```sh
+./gradlew :app:testDebugUnitTest
+```
+
+**Um resultado inequívoco abre o app sozinho**, depois de 150 ms sem digitação. O
 debounce é curto de propósito: só precisa cobrir o intervalo entre duas teclas
 de quem digita rápido, não dar tempo de pensar. Zerar dispararia no meio da
 palavra — `"gmail"` abriria já no `"gm"`.
+
+"Inequívoco" é **o único da melhor camada**, não "a lista inteira tem um
+item". A subsequência garante que a lista quase nunca fique com um só: `gm`
+traz Gmail (prefixo) *e* Gemini (`g`…`e`…`m`). Pela regra antiga o abrir
+automático teria morrido no dia em que o ranqueamento entrou.
 
 Duas armadilhas que isso cria, ambas fechadas:
 
