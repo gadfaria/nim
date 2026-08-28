@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Espelha NimBackground em ui/theme/Theme.kt — os dois têm que bater. -->
+    <color name="nim_background">#121212</color>
+    <color name="ic_launcher_background">#121212</color>
+</resources>
