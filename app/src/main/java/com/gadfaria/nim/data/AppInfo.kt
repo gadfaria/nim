@@ -22,11 +22,11 @@ data class AppInfo(
     val key: String = "${componentName.flattenToShortString()}@${user.hashCode()}"
 
     /**
-     * Calculado uma vez no carregamento, não a cada tecla. Num aparelho com
-     * centenas de apps, normalizar a lista inteira por caractere digitado é a
-     * diferença entre busca instantânea e busca engasgada.
+     * Preparado uma vez no carregamento, não a cada tecla. Num aparelho com
+     * centenas de apps, normalizar e quebrar em palavras a lista inteira por
+     * caractere digitado é a diferença entre busca instantânea e engasgada.
      */
-    val normalizedLabel: String = normalizeForSearch(label)
+    val searchable: SearchableLabel = searchableOf(label)
 }
 
 /**
