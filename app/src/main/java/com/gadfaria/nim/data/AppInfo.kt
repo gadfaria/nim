@@ -18,6 +18,12 @@ data class AppInfo(
     val componentName: ComponentName,
     val user: UserHandle,
     val userSerial: Long,
+    /**
+     * App de outro perfil que não o do launcher — na prática, o perfil de
+     * trabalho. Sem isto a gaveta lista "Gmail" duas vezes, com o mesmo nome e
+     * nenhuma diferença visível.
+     */
+    val isWork: Boolean,
 ) {
     /**
      * Identidade do app entre reinícios — é ela que vai pro disco na lista de

@@ -3,7 +3,9 @@ package com.gadfaria.nim.ui
 import android.graphics.Rect
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +58,13 @@ fun AppRow(
             .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // A marca fica na frente, mas o espaço dela é reservado em TODA linha:
+        // sem isso os nomes dos apps de trabalho ficariam deslocados à direita
+        // dos demais, e a coluna perderia o alinhamento.
+        Box(Modifier.width(WorkBadgeSlot)) {
+            if (app.isWork) WorkBadge()
+        }
+
         Text(
             text = app.label,
             style = MaterialTheme.typography.titleMedium,

@@ -332,6 +332,45 @@ Duas decisões que valem registro:
 Verificado com reboot de verdade do emulador: os favoritos voltam na ordem, e o
 que foi desfavoritado antes continua fora.
 
+## Perfil de trabalho
+
+A gaveta sempre listou os dois perfis (é o que `LauncherApps.profiles` dá desde
+o M2), mas sem distinguir: no Pixel do dia a dia isso significava **Gmail,
+Drive, Agenda, Contatos, Files e Play Store aparecendo duas vezes, com o mesmo
+nome e nenhuma diferença visível**.
+
+Agora app de outro perfil leva uma pastinha desenhada na frente do nome. A
+detecção é `user != Process.myUserHandle()` — o jeito público de fazer isso,
+já que `UserManager.isManagedProfile(id)` não é API aberta.
+
+Isso **não** contradiz o "sem ícones" do topo deste plano. O que foi descartado
+lá era carregar e cachear um ícone POR APP, com adaptive icons e o pacote de
+dor de performance junto. Aqui é uma forma vetorial só, compartilhada por todos
+os apps do perfil.
+
+O espaço da marca é reservado em toda linha, tenha ela marca ou não: sem isso
+os nomes dos apps de trabalho ficariam deslocados à direita dos demais.
+
+Em empate de nome, o pessoal vem antes do de trabalho.
+
+**Consequência no abrir automático:** app duplicado nos dois perfis nunca reduz
+a lista a um nome, então `cal` deixa de abrir a Agenda sozinha. Está certo —
+abrir o perfil errado seria pior —, mas é bom saber que vale para os 6 apps
+duplicados.
+
+### Testar isso
+
+O emulador `nim` ganhou um perfil de trabalho para esse fim:
+
+```sh
+adb shell pm create-user --profileOf 0 --managed Trabalho
+adb shell am start-user 10
+adb shell cmd package install-existing --user 10 <pacote>
+```
+
+Com dois perfis, `adb install` sem `--user 0` tenta alcançar os dois e trava.
+Para remover: `adb shell pm remove-user 10`.
+
 ## Notas de build
 
 - **AGP 9 tem Kotlin embutido.** Aplicar `org.jetbrains.kotlin.android` agora é
