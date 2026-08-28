@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- "n" minúsculo: a marca do Nim é tipográfica, como o launcher. -->
+    <path
+        android:fillColor="#E8E6E3"
+        android:pathData="M38,70 L38,39 L46,39 L46,44 C48.5,40.5 52.5,38.5 57,38.5 C65,38.5 71,44.5 71,53 L71,70 L63,70 L63,53.5 C63,49 60,46 55.5,46 C50.5,46 46,50.5 46,56 L46,70 Z" />
+</vector>

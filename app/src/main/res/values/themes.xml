@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fundo sólido: o launcher não mostra o papel de parede. O windowBackground
+         precisa ser a MESMA cor do Compose, senão a abertura pisca um flash de
+         outra cor antes do primeiro frame. -->
+    <style name="Theme.Nim" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowShowWallpaper">false</item>
+        <item name="android:windowBackground">@color/nim_background</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
