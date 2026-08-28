@@ -22,7 +22,8 @@ fun DrawerScreen(
     query: String,
     onQueryChange: (String) -> Unit,
     onLaunch: (AppInfo, Rect?) -> Unit,
-    onToggleFavorite: (AppInfo) -> Unit,
+    favoriteKeys: Set<String>,
+    onOpenMenu: (AppInfo, Rect?) -> Unit,
     searchFocusRequester: FocusRequester,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
@@ -49,8 +50,9 @@ fun DrawerScreen(
             items(apps, key = { it.key }) { app ->
                 AppRow(
                     app = app,
+                    isFavorite = app.key in favoriteKeys,
                     onLaunch = onLaunch,
-                    onToggleFavorite = onToggleFavorite,
+                    onOpenMenu = onOpenMenu,
                 )
             }
         }

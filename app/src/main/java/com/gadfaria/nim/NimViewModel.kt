@@ -104,4 +104,8 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
     fun onQueryChange(value: String) { _query.value = value }
 
     fun launch(app: AppInfo, sourceBounds: Rect?) = repository.launch(app, sourceBounds)
+
+    fun openAppInfo(app: AppInfo, sourceBounds: Rect?) = repository.openAppInfo(app, sourceBounds)
+
+    fun requestUninstall(app: AppInfo) = repository.requestUninstall(app)
 }
