@@ -14,13 +14,16 @@ data class SearchableLabel(
     val initials: String = words.joinToString("") { it.take(1) }
 }
 
-// Menor é melhor. A ordem é a do plano: prefixo > iniciais > contém, com
-// subsequência no fim como rede de segurança.
+// Menor é melhor. A ordem é a do plano: prefixo > iniciais > contém.
+//
+// Houve uma quinta camada, de subsequência, que fazia "wpp" achar WhatsApp.
+// Foi removida de propósito: ela arrastava resultados frouxos para a lista
+// ("gm" trazia Gemini por g...e...m) e, com eles, o abrir automático deixava
+// de valer — o que está na tela tem que ser o que abre.
 private const val TIER_PREFIX = 0        // "cam" -> Câmera
 private const val TIER_WORD_PREFIX = 1   // "cam" -> Scanner de Câmera
 private const val TIER_INITIALS = 2      // "gm"  -> Google Maps
 private const val TIER_CONTAINS = 3      // "ame" -> Câmera
-private const val TIER_SUBSEQUENCE = 4   // "wpp" -> WhatsApp
 const val NO_MATCH = Int.MAX_VALUE
 
 private val NOT_LETTER_OR_DIGIT = Regex("[^\\p{L}\\p{N}]+")
@@ -62,28 +65,15 @@ fun matchTier(target: SearchableLabel, term: String): Int = when {
     target.words.any { it.startsWith(term) } -> TIER_WORD_PREFIX
     target.initials.startsWith(term) -> TIER_INITIALS
     target.normalized.contains(term) -> TIER_CONTAINS
-    isSubsequence(target.normalized, term) -> TIER_SUBSEQUENCE
     else -> NO_MATCH
-}
-
-/** As letras do termo aparecem em ordem no rótulo, não necessariamente juntas. */
-private fun isSubsequence(text: String, term: String): Boolean {
-    var i = 0
-    for (char in text) {
-        if (char == term[i]) {
-            i++
-            if (i == term.length) return true
-        }
-    }
-    return false
 }
 
 data class RankResult<T>(
     val items: List<T>,
     /**
-     * O único app da melhor camada, se ela tiver exatamente um. É isto que
-     * dispara o abrir automático — e não "a lista toda tem um item só", que
-     * deixaria de acontecer assim que uma subsequência frouxa entrasse na lista.
+     * O app a abrir sozinho: existe só quando a busca reduziu a lista a um
+     * nome. Nada de escolher entre resultados visíveis — o que está na tela
+     * é o que abre.
      */
     val unambiguous: T?,
 )
@@ -102,11 +92,8 @@ fun <T> rankBySearch(
         // entrada é preservada.
         .sortedBy { it.second }
 
-    val bestTier = scored.firstOrNull()?.second
-    val best = scored.filter { it.second == bestTier }
-
     return RankResult(
         items = scored.map { it.first },
-        unambiguous = best.singleOrNull()?.first,
+        unambiguous = scored.singleOrNull()?.first,
     )
 }

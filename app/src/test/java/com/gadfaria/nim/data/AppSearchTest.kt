@@ -38,8 +38,11 @@ class AppSearchTest {
     }
 
     @Test
-    fun `subsequencia acha WhatsApp por wpp`() {
-        assertEquals(listOf("WhatsApp"), rank("wpp").items)
+    fun `sem camada de subsequencia, wpp nao acha nada`() {
+        // Decisão consciente: a subsequência achava WhatsApp por "wpp", mas
+        // arrastava resultados frouxos e matava o abrir automático.
+        assertEquals(emptyList<String>(), rank("wpp").items)
+        assertEquals(listOf("WhatsApp"), rank("wha").items)
     }
 
     @Test
@@ -55,13 +58,18 @@ class AppSearchTest {
     }
 
     @Test
-    fun `resultado inequivoco e o unico da melhor camada`() {
-        // "gm" traz Gmail (prefixo) e Gemini (subsequência g-e-m). Dois na
-        // lista, mas só um resultado óbvio — e é ele que abre sozinho.
+    fun `gm nao traz Gemini e o Gmail vence Google Maps`() {
+        // Gemini ficou de fora junto com a subsequência. Sobram Gmail
+        // (prefixo, camada 0) e Google Maps (iniciais, camada 2).
         val result = rank("gm")
-        // Gmail prefixo (0), Google Maps iniciais (2), Gemini subsequência (4).
-        assertEquals(listOf("Gmail", "Google Maps", "Gemini"), result.items)
-        assertEquals("Gmail", result.unambiguous)
+        assertEquals(listOf("Gmail", "Google Maps"), result.items)
+    }
+
+    @Test
+    fun `so abre sozinho quando sobra um nome na tela`() {
+        // Dois na lista: nada abre, mesmo com um deles sendo mais forte.
+        assertNull(rank("gm").unambiguous)
+        assertEquals("Gmail", rank("gma").unambiguous)
     }
 
     @Test
