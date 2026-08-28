@@ -37,6 +37,13 @@ val NimTypography = Typography(
         fontSize = 64.sp,
         letterSpacing = (-2).sp,
     ),
+    // Título de tela: bem menor que o relógio, que é o único display do app.
+    headlineMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Light,
+        fontSize = 30.sp,
+        letterSpacing = (-0.5).sp,
+    ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Normal,

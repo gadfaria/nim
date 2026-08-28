@@ -31,6 +31,13 @@ class Settings(private val context: Context) {
         prefs[favoritesKey]?.split(SEPARATOR)?.filter { it.isNotEmpty() } ?: emptyList()
     }
 
+    /** Grava a ordem inteira de uma vez — é o que o reordenar por arrasto produz. */
+    suspend fun setFavorites(keys: List<String>) {
+        context.dataStore.edit { prefs ->
+            prefs[favoritesKey] = keys.joinToString(SEPARATOR)
+        }
+    }
+
     suspend fun toggleFavorite(key: String) {
         context.dataStore.edit { prefs ->
             val current = prefs[favoritesKey]

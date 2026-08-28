@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/** As três telas do launcher. Não há navegação aninhada: é sempre uma delas. */
+enum class Screen { HOME, DRAWER, SETTINGS }
+
 class NimViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = AppRepository(application)
@@ -81,15 +84,21 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { settings.toggleFavorite(app.key) }
     }
 
-    private val _drawerOpen = MutableStateFlow(false)
-    val drawerOpen: StateFlow<Boolean> = _drawerOpen.asStateFlow()
+    private val _screen = MutableStateFlow(Screen.HOME)
+    val screen: StateFlow<Screen> = _screen.asStateFlow()
 
-    fun openDrawer() { _drawerOpen.value = true }
+    fun openDrawer() { _screen.value = Screen.DRAWER }
 
-    /** Fechar sempre limpa a busca: a gaveta reabre em branco, nunca no meio. */
-    fun closeDrawer() {
-        _drawerOpen.value = false
+    fun openSettings() { _screen.value = Screen.SETTINGS }
+
+    /** Voltar pra home sempre limpa a busca: a gaveta reabre em branco. */
+    fun goHome() {
+        _screen.value = Screen.HOME
         _query.value = ""
+    }
+
+    fun reorderFavorites(apps: List<AppInfo>) {
+        viewModelScope.launch { settings.setFavorites(apps.map { it.key }) }
     }
 
     fun onQueryChange(value: String) { _query.value = value }
