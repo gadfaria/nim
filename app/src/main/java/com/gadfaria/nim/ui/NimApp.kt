@@ -3,6 +3,7 @@ package com.gadfaria.nim.ui
 import android.graphics.Rect
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gadfaria.nim.NimViewModel
+import com.gadfaria.nim.Screen
 import com.gadfaria.nim.data.AppInfo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -51,16 +53,16 @@ fun NimApp(
     val apps by viewModel.visibleApps.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val unambiguous by viewModel.unambiguousMatch.collectAsStateWithLifecycle()
-    val drawerOpen by viewModel.drawerOpen.collectAsStateWithLifecycle()
+    val screen by viewModel.screen.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
     val keyboard = LocalSoftwareKeyboardController.current
     val searchFocus = remember { FocusRequester() }
 
-    fun closeDrawer() {
+    fun goHome() {
         keyboard?.hide()
-        viewModel.closeDrawer()
+        viewModel.goHome()
     }
 
     // Lançar SEMPRE fecha a gaveta e limpa a busca. Se a busca sobrevivesse ao
@@ -68,13 +70,13 @@ fun NimApp(
     // auto-abrir dispararia de novo: o usuário ficaria preso num laço.
     fun launchAndClose(app: AppInfo, bounds: Rect?) {
         viewModel.launch(app, bounds)
-        closeDrawer()
+        goHome()
     }
 
     // Abriu a gaveta: foco no campo e teclado na tela. A gaveta é para digitar,
     // não para rolar 300 nomes.
-    LaunchedEffect(drawerOpen) {
-        if (drawerOpen) {
+    LaunchedEffect(screen) {
+        if (screen == Screen.DRAWER) {
             searchFocus.requestFocus()
             keyboard?.show()
         }
@@ -87,15 +89,15 @@ fun NimApp(
     // sobrar um app, ele vira a âncora, e ao limpar a busca a lista tenta
     // mantê-lo no topo, batendo no fim da rolagem. Um scrollToItem(0) disparado
     // antes dessa reancoragem é simplesmente desfeito por ela.
-    LaunchedEffect(drawerOpen, query) {
-        if (drawerOpen) listState.scrollToItem(0)
+    LaunchedEffect(screen, query) {
+        if (screen == Screen.DRAWER) listState.scrollToItem(0)
     }
 
     // Um resultado inequívoco abre sozinho. As chaves do efeito são a busca e o
     // próprio resultado: mudou qualquer um, o timer reinicia — é isso que faz o
     // debounce, sem precisar de operador de flow.
-    LaunchedEffect(drawerOpen, query, unambiguous) {
-        if (!drawerOpen || query.isBlank()) return@LaunchedEffect
+    LaunchedEffect(screen, query, unambiguous) {
+        if (screen != Screen.DRAWER || query.isBlank()) return@LaunchedEffect
         val target = unambiguous ?: return@LaunchedEffect
         delay(AUTO_LAUNCH_DELAY_MS)
         launchAndClose(target, null)
@@ -104,12 +106,13 @@ fun NimApp(
     // Apertar HOME já estando no Nim volta pra home limpa. Sem isto o usuário
     // aperta HOME e continua vendo a gaveta onde parou.
     LaunchedEffect(homePresses) {
-        homePresses.collect { closeDrawer() }
+        homePresses.collect { goHome() }
     }
 
-    // Voltar fecha a gaveta. Na home ele não faz nada — quem garante isso é o
-    // callback no-op da MainActivity, que fica embaixo deste na pilha.
-    BackHandler(enabled = drawerOpen) { closeDrawer() }
+    // Voltar devolve pra home, venha da gaveta ou das configurações. Já na
+    // home ele não faz nada — quem garante isso é o callback no-op da
+    // MainActivity, que fica embaixo deste na pilha.
+    BackHandler(enabled = screen != Screen.HOME) { goHome() }
 
     val threshold = with(LocalDensity.current) { 56.dp.toPx() }
 
@@ -125,7 +128,7 @@ fun NimApp(
                 if (available.y > 0f) overscroll += available.y else overscroll = 0f
                 if (overscroll > threshold) {
                     overscroll = 0f
-                    closeDrawer()
+                    goHome()
                 }
                 return Offset.Zero
             }
@@ -137,9 +140,9 @@ fun NimApp(
         }
     }
 
-    Crossfade(targetState = drawerOpen, label = "home-gaveta") { showDrawer ->
-        if (showDrawer) {
-            Box(
+    Crossfade(targetState = screen, label = "telas") { current ->
+        when (current) {
+            Screen.DRAWER -> Box(
                 modifier = modifier
                     .fillMaxSize()
                     .nestedScroll(pullDownToClose)
@@ -154,8 +157,14 @@ fun NimApp(
                     listState = listState,
                 )
             }
-        } else {
-            Box(
+
+            Screen.SETTINGS -> SettingsScreen(
+                favorites = favorites,
+                onReorder = viewModel::reorderFavorites,
+                modifier = modifier.fillMaxSize(),
+            )
+
+            Screen.HOME -> Box(
                 modifier = modifier
                     .fillMaxSize()
                     .pointerInput(threshold) {
@@ -166,6 +175,12 @@ fun NimApp(
                                 if (dragged < -threshold) viewModel.openDrawer()
                             },
                         ) { _, delta -> dragged += delta }
+                    }
+                    // Segurar no vazio da home abre as configurações — a
+                    // convenção de launcher. Sobre um favorito não dispara:
+                    // a linha consome o toque longo antes, pra favoritar.
+                    .pointerInput(Unit) {
+                        detectTapGestures(onLongPress = { viewModel.openSettings() })
                     }
             ) {
                 HomeScreen(
