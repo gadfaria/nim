@@ -164,7 +164,7 @@ app/src/main/java/com/gadfaria/nim/
 | **M1** ✅ | Projeto Nim vira HOME app | Aperto HOME no emulador → escolho Nim → aparece minha tela |
 | **M2** ✅ | Gaveta com apps reais, A–Z | Lista completa, toque abre o app |
 | **M3** ✅ | Busca | 2–3 letras filtram, Enter lança o primeiro resultado |
-| **M4** | Favoritos na home + relógio | Long press favorita, persiste após reiniciar |
+| **M4** ✅ | Favoritos na home + relógio | Long press favorita, persiste após reiniciar |
 | **M5** | Polimento: gesto de swipe, tema escuro, transições | Uso ele no dia a dia sem irritação |
 
 M0 é o único passo lento (download do SDK + imagem do emulador, alguns GB).
@@ -205,12 +205,20 @@ emulator -avd nim &
 adb wait-for-device
 ```
 
+O `set-home-activity` **não sobrevive ao reboot** do emulador: depois de cada
+reinício o launcher do sistema volta a ser a home e é preciso rodar de novo
+
+```sh
+adb shell cmd package set-home-activity com.gadfaria.nim/.MainActivity
+```
+
 ---
 
 ## Próximo passo
 
-**M4** — favoritos na home. Long press na gaveta favorita, DataStore persiste,
-e a home passa a listar os favoritos abaixo do relógio.
+**M5** — polimento: transição decente entre home e gaveta (hoje é `Crossfade`,
+que dissolve as duas ao mesmo tempo), e o menu de toque longo do mock com
+info do app e desinstalar.
 
 ---
 
@@ -298,6 +306,31 @@ A normalização (minúsculas, sem acento) é calculada uma vez por app no
 carregamento, não a cada tecla — com centenas de apps, normalizar a lista
 inteira por caractere digitado é a diferença entre busca instantânea e busca
 engasgada.
+
+## Favoritos (M4)
+
+Toque longo alterna o favorito, na gaveta e na home. Sem ícones e sem menu, o
+toque longo não tem retorno visual — a vibração é o único aviso de que algo
+aconteceu, então ela não é enfeite.
+
+A home mostra os favoritos **na ordem em que foram favoritados**, embaixo, onde
+o polegar alcança. Por isso o DataStore guarda uma lista com separador, não um
+`Set` de preferências: `Set` perderia a ordem a cada leitura.
+
+Duas decisões que valem registro:
+
+- **A chave é `ComponentName` + serial do perfil**, vindo de
+  `UserManager.getSerialNumberForUser()`. Antes era `user.hashCode()`, que
+  servia como chave de lista do Compose mas não presta como identidade em
+  disco: `hashCode` não tem contrato de estabilidade, e um favorito apontando
+  pro perfil errado depois de um reboot seria um bug silencioso.
+- **Chave sem app correspondente é ignorada, não apagada.** Um app pode estar
+  temporariamente indisponível — perfil de trabalho em modo silencioso,
+  atualização em curso — e apagar o favorito nesse momento perderia a escolha
+  do usuário por um sumiço passageiro. Ele reaparece sozinho quando o app volta.
+
+Verificado com reboot de verdade do emulador: os favoritos voltam na ordem, e o
+que foi desfavoritado antes continua fora.
 
 ## Notas de build
 
