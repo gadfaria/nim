@@ -1,5 +1,6 @@
 package com.gadfaria.nim.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,6 +19,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -29,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.gadfaria.nim.data.AppInfo
 import com.gadfaria.nim.ui.theme.NimForegroundMuted
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private val RowHeight = 56.dp
@@ -37,6 +41,7 @@ private val RowHeight = 56.dp
 fun SettingsScreen(
     favorites: List<AppInfo>,
     onReorder: (List<AppInfo>) -> Unit,
+    onApplyWallpaper: suspend () -> Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -78,7 +83,59 @@ fun SettingsScreen(
                 color = NimForegroundMuted,
             )
         }
+
+        Spacer(Modifier.height(32.dp))
+
+        WallpaperSection(onApply = onApplyWallpaper)
     }
+}
+
+/**
+ * Uma ação, não um liga/desliga: depois de aplicado o papel de parede fica, e
+ * o Nim não tem como devolver o anterior — ler o papel atual exige permissão
+ * de armazenamento que um launcher só de texto não deveria pedir. Para voltar,
+ * o usuário escolhe outro pelo Android, como sempre.
+ */
+@Composable
+private fun WallpaperSection(onApply: suspend () -> Boolean) {
+    val scope = rememberCoroutineScope()
+    val noRipple = remember { MutableInteractionSource() }
+    // null = ainda não tocou; senão, o resultado da última tentativa.
+    var applied by remember { mutableStateOf<Boolean?>(null) }
+    var busy by remember { mutableStateOf(false) }
+
+    Text(
+        text = "Papel de parede",
+        style = MaterialTheme.typography.bodyLarge,
+        color = NimForegroundMuted,
+    )
+
+    Text(
+        text = "Usar o fundo do Nim na tela inicial",
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(interactionSource = noRipple, indication = null, enabled = !busy) {
+                busy = true
+                scope.launch {
+                    applied = onApply()
+                    busy = false
+                }
+            }
+            .padding(vertical = 14.dp),
+    )
+
+    Text(
+        text = when (applied) {
+            null -> "Os apps recentes mostram o papel de parede por trás. " +
+                "Isto troca só o da tela inicial; o da tela de bloqueio fica."
+            true -> "Pronto. Para voltar, escolha outro papel de parede pelo Android."
+            false -> "O Android não deixou trocar o papel de parede."
+        },
+        style = MaterialTheme.typography.bodyLarge,
+        color = NimForegroundMuted,
+    )
 }
 
 /**

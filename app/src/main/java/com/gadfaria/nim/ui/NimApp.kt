@@ -198,6 +198,7 @@ fun NimApp(
             Screen.SETTINGS -> SettingsScreen(
                 favorites = favorites,
                 onReorder = viewModel::reorderFavorites,
+                onApplyWallpaper = viewModel::applyNimWallpaper,
                 modifier = modifier.fillMaxSize(),
             )
 

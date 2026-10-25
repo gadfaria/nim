@@ -6,6 +6,10 @@
          É permissão normal: concedida na instalação, sem pedir ao usuário. -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
+    <!-- Para a opção de papel de parede nas configurações. Permissão normal,
+         sem diálogo. -->
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+
     <!-- Detalhe nº 2: a partir da API 30 o Android esconde os apps instalados.
          Sem este bloco a gaveta vem VAZIA e sem erro nenhum. -->
     <queries>
