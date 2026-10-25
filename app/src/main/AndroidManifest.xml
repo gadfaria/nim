@@ -34,6 +34,20 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <!-- Detalhe nº 3: sem quem atenda CONFIRM_PIN_SHORTCUT, o
+             isRequestPinShortcutSupported() dá false e o Chrome esconde
+             "Instalar app"/"Adicionar à tela inicial" para os PWAs. -->
+        <activity
+            android:name=".PinShortcutActivity"
+            android:theme="@style/Theme.Nim.Translucent"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

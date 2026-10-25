@@ -69,7 +69,10 @@ fun AppMenu(
             onClick = onToggleFavorite,
         )
         MenuItem(text = "Informações do app", onClick = onAppInfo)
-        MenuItem(text = "Desinstalar", onClick = onUninstall)
+        MenuItem(
+            text = if (app.isShortcut) "Remover atalho" else "Desinstalar",
+            onClick = onUninstall,
+        )
 
         Spacer(Modifier.height(32.dp))
     }
