@@ -6,10 +6,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.gadfaria.nim.data.AppInfo
 import com.gadfaria.nim.data.AppRepository
+import com.gadfaria.nim.data.HomeWallpaper
 import com.gadfaria.nim.data.RankResult
 import com.gadfaria.nim.data.Settings
 import com.gadfaria.nim.data.normalizeForSearch
 import com.gadfaria.nim.data.rankBySearch
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** As três telas do launcher. Não há navegação aninhada: é sempre uma delas. */
 enum class Screen { HOME, DRAWER, SETTINGS }
@@ -26,6 +29,7 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = AppRepository(application)
     private val settings = Settings(application)
+    private val homeWallpaper = HomeWallpaper(application)
 
     private val allApps: StateFlow<List<AppInfo>> = repository.apps.stateIn(
         scope = viewModelScope,
@@ -108,4 +112,8 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
     fun openAppInfo(app: AppInfo, sourceBounds: Rect?) = repository.openAppInfo(app, sourceBounds)
 
     fun requestUninstall(app: AppInfo) = repository.requestUninstall(app)
+
+    /** Devolve se deu certo, para a tela de configurações dizer o que houve. */
+    suspend fun applyNimWallpaper(): Boolean =
+        withContext(Dispatchers.IO) { homeWallpaper.applyNimBackground() }
 }
