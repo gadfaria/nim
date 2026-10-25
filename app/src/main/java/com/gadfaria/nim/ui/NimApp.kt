@@ -203,8 +203,8 @@ fun NimApp(
             )
 
             // Segurar no vazio da home abre as configurações — a convenção de
-            // launcher. Sobre um favorito não dispara: a linha consome o toque
-            // longo antes, pro menu.
+            // launcher. Sobre um favorito não dispara: a linha consome o down,
+            // e o homeGestures deixa o toque longo pra ela (o menu).
             Screen.HOME -> Box(
                 modifier = modifier
                     .fillMaxSize()

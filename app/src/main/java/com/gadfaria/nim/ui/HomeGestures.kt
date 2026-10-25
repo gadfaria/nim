@@ -49,7 +49,11 @@ fun Modifier.homeGestures(
 
         when (becameDrag) {
             null -> {
-                onLongPress()
+                // Down já consumido = o toque começou numa linha de app, que
+                // tem o próprio toque longo (o menu). O timeout daqui corre em
+                // paralelo ao dela, então sem esta checagem os dois disparavam:
+                // o menu abria por cima das configurações, e voltar caía nelas.
+                if (!down.isConsumed) onLongPress()
                 consumeUntilUp(down.id)
             }
 
