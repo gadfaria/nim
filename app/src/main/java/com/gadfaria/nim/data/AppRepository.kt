@@ -176,7 +176,7 @@ class AppRepository(context: Context) {
         runCatching {
             val intent = Intent(
                 Intent.ACTION_DELETE,
-                Uri.parse("package:${'$'}{app.componentName.packageName}"),
+                Uri.parse("package:${app.componentName.packageName}"),
             )
                 .putExtra(Intent.EXTRA_USER, app.user)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
