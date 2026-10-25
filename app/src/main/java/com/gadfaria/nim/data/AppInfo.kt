@@ -24,7 +24,15 @@ data class AppInfo(
      * nenhuma diferença visível.
      */
     val isWork: Boolean,
+    /**
+     * Preenchido quando a linha não é um app, e sim um atalho fixado — o
+     * "Adicionar à tela inicial" do Chrome, por exemplo. Aí [componentName]
+     * aponta pro app dono do atalho, que é quem abre as informações.
+     */
+    val shortcutId: String? = null,
 ) {
+    val isShortcut: Boolean get() = shortcutId != null
+
     /**
      * Identidade do app entre reinícios — é ela que vai pro disco na lista de
      * favoritos.
@@ -33,7 +41,11 @@ data class AppInfo(
      * contrato de estabilidade, e um favorito que aponta pro perfil errado
      * depois de um reboot é um bug silencioso.
      */
-    val key: String = "${componentName.flattenToShortString()}#$userSerial"
+    val key: String =
+        if (shortcutId == null) "${componentName.flattenToShortString()}#$userSerial"
+        // Atalho é identificado por pacote + id, não por activity: o mesmo app
+        // pode fixar vários (um por site, no Chrome) e a activity pode faltar.
+        else "shortcut:${componentName.packageName}/$shortcutId#$userSerial"
 
     /**
      * Preparado uma vez no carregamento, não a cada tecla. Num aparelho com
