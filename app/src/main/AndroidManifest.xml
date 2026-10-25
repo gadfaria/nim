@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Detalhe nº 4: desde a API 28, ACTION_DELETE sem esta permissão é
+         recusado em silêncio pelo instalador — o "Desinstalar" não abre nada.
+         É permissão normal: concedida na instalação, sem pedir ao usuário. -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
     <!-- Detalhe nº 2: a partir da API 30 o Android esconde os apps instalados.
          Sem este bloco a gaveta vem VAZIA e sem erro nenhum. -->
     <queries>
