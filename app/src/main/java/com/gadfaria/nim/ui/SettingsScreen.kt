@@ -91,16 +91,16 @@ fun SettingsScreen(
 }
 
 /**
- * Uma ação, não um liga/desliga: depois de aplicado o papel de parede fica, e
- * o Nim não tem como devolver o anterior — ler o papel atual exige permissão
- * de armazenamento que um launcher só de texto não deveria pedir. Para voltar,
- * o usuário escolhe outro pelo Android, como sempre.
+ * An action, not a toggle: once applied the wallpaper stays, and Nim has no way
+ * to restore the previous one — reading the current wallpaper requires a storage
+ * permission a text-only launcher shouldn't ask for. To go back, the user picks
+ * another one through Android, as usual.
  */
 @Composable
 private fun WallpaperSection(onApply: suspend () -> Boolean) {
     val scope = rememberCoroutineScope()
     val noRipple = remember { MutableInteractionSource() }
-    // null = ainda não tocou; senão, o resultado da última tentativa.
+    // null = not tapped yet; otherwise, the result of the last attempt.
     var applied by remember { mutableStateOf<Boolean?>(null) }
     var busy by remember { mutableStateOf(false) }
 
@@ -139,22 +139,23 @@ private fun WallpaperSection(onApply: suspend () -> Boolean) {
 }
 
 /**
- * Reordenação por arrasto, sem biblioteca e sem LazyColumn.
+ * Drag to reorder, with no library and no LazyColumn.
  *
- * Favorito é coisa de meia dúzia, então uma Column simples cabe inteira na tela
- * e a matemática do índice vira uma divisão: linha de altura fixa, deslocamento
- * dividido pela altura, e a troca acontece ao cruzar cada linha.
+ * Favorites are half a dozen at most, so a plain Column fits entirely on screen
+ * and the index math becomes a division: fixed row height, offset divided by the
+ * height, and the swap happens when crossing each row.
  */
 @Composable
 private fun ReorderableFavorites(
     favorites: List<AppInfo>,
     onReorder: (List<AppInfo>) -> Unit,
 ) {
-    // Cópia local para o arrasto mexer a cada cruzamento, sem esperar o
-    // DataStore ir e voltar a cada pixel. Só é regravada quando o dedo levanta.
+    // Local copy so the drag can move items on every crossing without waiting
+    // for a DataStore round trip per pixel. It's only written back when the
+    // finger lifts.
     //
-    // O remember compara por conteúdo: quando o fluxo devolve a mesma ordem que
-    // acabamos de gravar, nada é reiniciado e a lista não pisca.
+    // remember compares by content: when the flow returns the same order we just
+    // wrote, nothing resets and the list doesn't flicker.
     var items by remember(favorites) { mutableStateOf(favorites) }
 
     var draggingIndex by remember { mutableIntStateOf(-1) }
@@ -165,17 +166,18 @@ private fun ReorderableFavorites(
 
     Column(Modifier.fillMaxWidth()) {
         items.forEachIndexed { index, app ->
-            // A key faz o Compose MOVER o nó em vez de recriá-lo quando a ordem
-            // muda. Sem ela o slot seria reaproveitado por posição, o
-            // pointerInput reiniciaria e o arrasto morreria no primeiro cruzamento.
+            // The key makes Compose MOVE the node instead of recreating it when
+            // the order changes. Without it the slot would be reused by position,
+            // pointerInput would restart and the drag would die on the first
+            // crossing.
             key(app.key) {
                 val dragging = index == draggingIndex
 
                 Text(
                     text = app.label,
                     style = MaterialTheme.typography.titleMedium,
-                    // Normalmente todas acesas. Durante um arrasto as outras
-                    // apagam, isolando visualmente a que está na mão.
+                    // Normally all lit. During a drag the others dim, visually
+                    // isolating the one in hand.
                     color = if (draggingIndex == -1 || dragging) {
                         MaterialTheme.colorScheme.onBackground
                     } else {
@@ -219,8 +221,8 @@ private fun ReorderableFavorites(
                                     items = items.toMutableList()
                                         .apply { add(to, removeAt(from)) }
                                     draggingIndex = to
-                                    // Desconta o que já virou troca, senão o
-                                    // item foge do dedo.
+                                    // Subtract what already became a swap, or
+                                    // the item runs away from the finger.
                                     dragOffset -= (to - from) * rowHeightPx
                                 },
                             )

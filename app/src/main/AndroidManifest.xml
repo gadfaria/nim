@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Detalhe nº 4: desde a API 28, ACTION_DELETE sem esta permissão é
-         recusado em silêncio pelo instalador — o "Desinstalar" não abre nada.
-         É permissão normal: concedida na instalação, sem pedir ao usuário. -->
+    <!-- Detail #4: since API 28, ACTION_DELETE without this permission is
+         silently refused by the installer — "Uninstall" opens nothing.
+         It's a normal permission: granted at install time, no user prompt. -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
-    <!-- Para a opção de papel de parede nas configurações. Permissão normal,
-         sem diálogo. -->
+    <!-- For the wallpaper option in settings. Normal permission, no dialog. -->
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
 
-    <!-- Detalhe nº 2: a partir da API 30 o Android esconde os apps instalados.
-         Sem este bloco a gaveta vem VAZIA e sem erro nenhum. -->
+    <!-- Detail #2: since API 30 Android hides installed apps.
+         Without this block the drawer comes back EMPTY with no error at all. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -36,7 +35,7 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
 
-            <!-- Detalhe nº 1: é isto que faz o app ser oferecido como HOME. -->
+            <!-- Detail #1: this is what makes the app be offered as HOME. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
@@ -44,9 +43,9 @@
             </intent-filter>
         </activity>
 
-        <!-- Detalhe nº 3: sem quem atenda CONFIRM_PIN_SHORTCUT, o
-             isRequestPinShortcutSupported() dá false e o Chrome esconde
-             "Instalar app"/"Adicionar à tela inicial" para os PWAs. -->
+        <!-- Detail #3: with nothing handling CONFIRM_PIN_SHORTCUT,
+             isRequestPinShortcutSupported() returns false and Chrome hides
+             "Install app"/"Add to home screen" for PWAs. -->
         <activity
             android:name=".PinShortcutActivity"
             android:theme="@style/Theme.Nim.Translucent"

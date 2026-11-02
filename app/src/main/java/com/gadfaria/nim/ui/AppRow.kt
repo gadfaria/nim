@@ -25,8 +25,8 @@ import com.gadfaria.nim.data.AppInfo
 import com.gadfaria.nim.ui.theme.NimForegroundMuted
 
 /**
- * Uma linha de app. Serve à gaveta e aos favoritos da home — nas duas o toque
- * lança e o toque longo abre o menu.
+ * An app row. Used by the drawer and the home favorites — in both, a tap
+ * launches and a long press opens the menu.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -37,8 +37,8 @@ fun AppRow(
     onOpenMenu: (AppInfo, Rect?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Guardado numa var em vez de estado: só é lido no clique, e virar estado
-    // recomporia a linha a cada scroll.
+    // Kept in a var instead of state: it's only read on click, and making it
+    // state would recompose the row on every scroll.
     var coordinates: LayoutCoordinates? = remember { null }
     val haptics = LocalHapticFeedback.current
 
@@ -47,8 +47,8 @@ fun AppRow(
             .fillMaxWidth()
             .onGloballyPositioned { coordinates = it }
             .combinedClickable(
-                // A animação de abertura sai de onde o dedo tocou, não do
-                // centro da tela.
+                // The opening animation starts where the finger touched, not
+                // from the center of the screen.
                 onClick = { onLaunch(app, coordinates?.launchBounds()) },
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -58,9 +58,9 @@ fun AppRow(
             .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // A marca fica na frente, mas o espaço dela é reservado em TODA linha:
-        // sem isso os nomes dos apps de trabalho ficariam deslocados à direita
-        // dos demais, e a coluna perderia o alinhamento.
+        // The badge goes in front, but its space is reserved on EVERY row:
+        // without it, work app names would be shifted right of the others and
+        // the column would lose its alignment.
         Box(Modifier.width(WorkBadgeSlot)) {
             if (app.isWork) WorkBadge()
         }
@@ -74,9 +74,9 @@ fun AppRow(
             modifier = Modifier.weight(1f, fill = false),
         )
 
-        // A marca de favorito é um ponto, não um ícone: é o único jeito de
-        // responder "esse já está na home?" sem trair a decisão de não ter
-        // ícones. Fica depois do rótulo pra não desalinhar a coluna.
+        // The favorite marker is a dot, not an icon: it's the only way to
+        // answer "is this one already on the home?" without betraying the
+        // no-icons decision. It goes after the label so the column stays aligned.
         if (isFavorite) {
             Text(
                 text = "  ·",

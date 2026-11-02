@@ -23,11 +23,11 @@ import com.gadfaria.nim.ui.theme.NimBackground
 import com.gadfaria.nim.ui.theme.NimForegroundMuted
 
 /**
- * Menu do toque longo. Sem Material dropdown de propósito: aquilo traz caixa,
- * sombra e cantos que não existem em nenhum outro lugar do Nim.
+ * The long-press menu. No Material dropdown on purpose: it brings a box, shadow
+ * and corners that exist nowhere else in Nim.
  *
- * As opções ficam embaixo, ao alcance do polegar — o dedo já está lá quando o
- * menu abre.
+ * The options sit at the bottom, within thumb reach — the finger is already
+ * there when the menu opens.
  */
 @Composable
 fun AppMenu(
@@ -44,12 +44,13 @@ fun AppMenu(
     Column(
         modifier = modifier
             .fillMaxSize()
-            // Opaco. Véu translúcido deixava a gaveta legível por baixo e as
-            // linhas se intercalavam com as opções — dois textos disputando a
-            // mesma altura da tela. O nome do app no topo já dá o contexto que
-            // a transparência tentava dar.
+            // Opaque. A translucent scrim left the drawer readable underneath
+            // and its rows interleaved with the options — two texts fighting for
+            // the same screen height. The app name at the top already gives the
+            // context the transparency was trying to give.
             .background(NimBackground)
-            // Tocar fora fecha. Sem ripple: o Nim não tem esse vocabulário.
+            // Tapping outside closes it. No ripple: Nim doesn't have that
+            // vocabulary.
             .clickable(interactionSource = noRipple, indication = null, onClick = onDismiss)
             .padding(horizontal = 28.dp),
         verticalArrangement = Arrangement.Bottom,

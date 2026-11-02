@@ -6,12 +6,12 @@ import java.text.Normalizer
 import java.util.Locale
 
 /**
- * Um app lançável. Sem ícone de propósito: a gaveta é só texto, então isto é
- * tudo que o launcher precisa carregar por app.
+ * A launchable app. No icon on purpose: the drawer is text only, so this is all
+ * the launcher needs to load per app.
  *
- * O [user] não é decoração — com perfil de trabalho o mesmo [componentName]
- * aparece duas vezes, uma por perfil, e lançar no perfil errado abre o app
- * errado.
+ * [user] isn't decoration — with a work profile the same [componentName] shows
+ * up twice, once per profile, and launching in the wrong profile opens the wrong
+ * app.
  */
 data class AppInfo(
     val label: String,
@@ -19,47 +19,47 @@ data class AppInfo(
     val user: UserHandle,
     val userSerial: Long,
     /**
-     * App de outro perfil que não o do launcher — na prática, o perfil de
-     * trabalho. Sem isto a gaveta lista "Gmail" duas vezes, com o mesmo nome e
-     * nenhuma diferença visível.
+     * App from a profile other than the launcher's — in practice, the work
+     * profile. Without this the drawer lists "Gmail" twice, with the same name
+     * and no visible difference.
      */
     val isWork: Boolean,
     /**
-     * Preenchido quando a linha não é um app, e sim um atalho fixado — o
-     * "Adicionar à tela inicial" do Chrome, por exemplo. Aí [componentName]
-     * aponta pro app dono do atalho, que é quem abre as informações.
+     * Set when the row isn't an app but a pinned shortcut — Chrome's "Add to
+     * home screen", for example. Then [componentName] points to the shortcut's
+     * owner app, which is what opens the app info.
      */
     val shortcutId: String? = null,
 ) {
     val isShortcut: Boolean get() = shortcutId != null
 
     /**
-     * Identidade do app entre reinícios — é ela que vai pro disco na lista de
-     * favoritos.
+     * The app's identity across restarts — this is what goes to disk in the
+     * favorites list.
      *
-     * O serial vem de UserManager, não de `user.hashCode()`: hashCode não tem
-     * contrato de estabilidade, e um favorito que aponta pro perfil errado
-     * depois de um reboot é um bug silencioso.
+     * The serial comes from UserManager, not from `user.hashCode()`: hashCode has
+     * no stability contract, and a favorite pointing to the wrong profile after
+     * a reboot is a silent bug.
      */
     val key: String =
         if (shortcutId == null) "${componentName.flattenToShortString()}#$userSerial"
-        // Atalho é identificado por pacote + id, não por activity: o mesmo app
-        // pode fixar vários (um por site, no Chrome) e a activity pode faltar.
+        // A shortcut is identified by package + id, not by activity: the same app
+        // can pin several (one per site, in Chrome) and the activity may be missing.
         else "shortcut:${componentName.packageName}/$shortcutId#$userSerial"
 
     /**
-     * Preparado uma vez no carregamento, não a cada tecla. Num aparelho com
-     * centenas de apps, normalizar e quebrar em palavras a lista inteira por
-     * caractere digitado é a diferença entre busca instantânea e engasgada.
+     * Prepared once at load time, not on every keystroke. On a device with
+     * hundreds of apps, normalizing and splitting the whole list into words per
+     * typed character is the difference between instant and stuttering search.
      */
     val searchable: SearchableLabel = searchableOf(label)
 }
 
 /**
- * Minúsculas e sem acento, para que "cam" ache "Câmera" e "acoes" ache "Ações".
+ * Lowercase and accent-free, so "cam" finds "Câmera" and "acoes" finds "Ações".
  *
- * NFD separa a letra do acento em dois caracteres; aí basta descartar os
- * diacríticos (categoria Unicode Mn) e sobra a letra base.
+ * NFD splits the letter from the accent into two characters; then dropping the
+ * diacritics (Unicode category Mn) leaves the base letter.
  */
 fun normalizeForSearch(text: String): String =
     Normalizer.normalize(text, Normalizer.Form.NFD)

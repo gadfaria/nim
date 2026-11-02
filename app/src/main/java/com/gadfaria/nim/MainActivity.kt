@@ -23,23 +23,24 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: NimViewModel by viewModels()
 
-    /** Emite quando o usuário aperta HOME já estando no Nim. */
+    /** Emits when the user presses HOME while already in Nim. */
     private val homePressed = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Fundo é sempre escuro, então os ícones das barras são sempre claros.
+        // The background is always dark, so the bar icons are always light.
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = false
         }
 
-        // Numa home, o botão voltar não faz nada. Nunca finish(): o launcher
-        // é o que sobra quando tudo mais é fechado — sair dele deixa a tela preta.
-        // O BackHandler da gaveta é registrado depois e tem prioridade sobre este.
-        onBackPressedDispatcher.addCallback(this) { /* no-op proposital */ }
+        // On a home, the back button does nothing. Never finish(): the launcher
+        // is what's left when everything else is closed — leaving it blacks out
+        // the screen. The drawer's BackHandler is registered later and takes
+        // priority over this one.
+        onBackPressedDispatcher.addCallback(this) { /* intentional no-op */ }
 
         setContent {
             NimTheme {

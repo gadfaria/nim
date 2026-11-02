@@ -5,8 +5,8 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * O ranqueamento roda na JVM porque os casos que importam dependem de apps que
- * o emulador não tem — não dá pra verificar "wpp" achando WhatsApp com adb.
+ * Ranking runs on the JVM because the cases that matter depend on apps the
+ * emulator doesn't have — you can't verify "wpp" finding WhatsApp with adb.
  */
 class AppSearchTest {
 
@@ -19,74 +19,74 @@ class AppSearchTest {
         rankBySearch(apps, normalizeForSearch(term)) { searchableOf(it) }
 
     @Test
-    fun `prefixo vem antes de prefixo de palavra`() {
-        // O exemplo do plano: Câmera antes de Scanner de Câmera.
+    fun `prefix comes before word prefix`() {
+        // The plan's example: Câmera before Scanner de Câmera.
         assertEquals(listOf("Câmera", "Scanner de Câmera"), rank("cam").items)
     }
 
     @Test
-    fun `busca ignora acento nos dois sentidos`() {
+    fun `search ignores accents both ways`() {
         assertEquals("Câmera", rank("camera").items.first())
         assertEquals("Câmera", rank("câmera").items.first())
     }
 
     @Test
-    fun `iniciais acham nome composto`() {
-        // "gm" são as iniciais de Google Maps — camada 2. Ele não vem primeiro
-        // na lista porque Gmail casa como prefixo, que é mais forte.
+    fun `initials find compound names`() {
+        // "gm" are Google Maps' initials — tier 2. It doesn't come first in the
+        // list because Gmail matches as a prefix, which is stronger.
         assertEquals(2, matchTier(searchableOf("Google Maps"), "gm"))
     }
 
     @Test
-    fun `sem camada de subsequencia, wpp nao acha nada`() {
-        // Decisão consciente: a subsequência achava WhatsApp por "wpp", mas
-        // arrastava resultados frouxos e matava o abrir automático.
+    fun `without the subsequence tier, wpp finds nothing`() {
+        // Deliberate decision: subsequence found WhatsApp via "wpp", but it
+        // dragged in loose results and killed auto-launch.
         assertEquals(emptyList<String>(), rank("wpp").items)
         assertEquals(listOf("WhatsApp"), rank("wha").items)
     }
 
     @Test
-    fun `camelCase vira palavras separadas`() {
-        // "app" é prefixo da segunda corcova de WhatsApp, não subsequência.
+    fun `camelCase becomes separate words`() {
+        // "app" is a prefix of WhatsApp's second hump, not a subsequence.
         assertEquals(1, matchTier(searchableOf("WhatsApp"), "app"))
     }
 
     @Test
-    fun `sigla colada nao e quebrada`() {
-        // "YT" é uma palavra só: "yt" casa como prefixo, tier 0.
+    fun `joined acronym is not split`() {
+        // "YT" is a single word: "yt" matches as a prefix, tier 0.
         assertEquals(0, matchTier(searchableOf("YT Music"), "yt"))
     }
 
     @Test
-    fun `gm nao traz Gemini e o Gmail vence Google Maps`() {
-        // Gemini ficou de fora junto com a subsequência. Sobram Gmail
-        // (prefixo, camada 0) e Google Maps (iniciais, camada 2).
+    fun `gm does not bring Gemini and Gmail beats Google Maps`() {
+        // Gemini went away along with subsequence. What's left is Gmail
+        // (prefix, tier 0) and Google Maps (initials, tier 2).
         val result = rank("gm")
         assertEquals(listOf("Gmail", "Google Maps"), result.items)
     }
 
     @Test
-    fun `so abre sozinho quando sobra um nome na tela`() {
-        // Dois na lista: nada abre, mesmo com um deles sendo mais forte.
+    fun `only auto-launches when one name is left on screen`() {
+        // Two in the list: nothing opens, even with one of them being stronger.
         assertNull(rank("gm").unambiguous)
         assertEquals("Gmail", rank("gma").unambiguous)
     }
 
     @Test
-    fun `empate na melhor camada nao e inequivoco`() {
-        // "c" é prefixo de Calendar, Câmera e Chrome.
+    fun `tie in the best tier is not unambiguous`() {
+        // "c" is a prefix of Calendar, Câmera and Chrome.
         assertNull(rank("c").unambiguous)
     }
 
     @Test
-    fun `busca sem resultado vem vazia`() {
+    fun `search with no result comes back empty`() {
         val result = rank("zzzz")
         assertEquals(emptyList<String>(), result.items)
         assertNull(result.unambiguous)
     }
 
     @Test
-    fun `busca vazia nao dispara abertura`() {
+    fun `empty search does not trigger a launch`() {
         val result = rank("")
         assertEquals(apps, result.items)
         assertNull(result.unambiguous)

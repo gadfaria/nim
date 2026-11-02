@@ -6,15 +6,15 @@ import android.graphics.Bitmap
 import com.gadfaria.nim.R
 
 /**
- * Papel de parede da tela inicial com a cor de fundo do Nim.
+ * Home screen wallpaper in Nim's background color.
  *
- * Existe por causa dos apps recentes: aquela tela é do Pixel Launcher, não do
- * Nim, e ela sempre desenha o papel de parede atrás dos cartões. Nenhum launcher
- * de terceiros consegue assumir os recentes, então o jeito de o fundo bater com
- * o Nim é o próprio papel de parede ter a cor dele.
+ * It exists because of recents: that screen belongs to Pixel Launcher, not Nim,
+ * and it always draws the wallpaper behind the cards. No third-party launcher
+ * can take over recents, so the way to make the background match Nim is for the
+ * wallpaper itself to have its color.
  *
- * Só FLAG_SYSTEM: a tela de bloqueio é onde o papel de parede ainda aparece de
- * verdade, e trocá-la junto apagaria a escolha do usuário sem motivo.
+ * FLAG_SYSTEM only: the lock screen is where the wallpaper still really shows,
+ * and changing it too would wipe the user's choice for no reason.
  */
 class HomeWallpaper(context: Context) {
 
@@ -22,16 +22,16 @@ class HomeWallpaper(context: Context) {
     private val wallpaperManager = WallpaperManager.getInstance(appContext)
 
     /**
-     * Bloqueante — decodificar e gravar o papel de parede leva centenas de ms.
-     * Chamar fora da main thread. Devolve false se o aparelho ou uma política
-     * de administrador não deixar trocar.
+     * Blocking — decoding and writing the wallpaper takes hundreds of ms. Call it
+     * off the main thread. Returns false if the device or an admin policy
+     * doesn't allow changing it.
      */
     fun applyNimBackground(): Boolean {
         if (!wallpaperManager.isWallpaperSupported || !wallpaperManager.isSetWallpaperAllowed) {
             return false
         }
-        // Cor sólida não tem detalhe a perder na escala: um bitmap pequeno
-        // esticado pelo sistema fica idêntico a um do tamanho da tela.
+        // A solid color has no detail to lose when scaled: a small bitmap
+        // stretched by the system looks identical to a screen-sized one.
         val bitmap = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888).apply {
             eraseColor(appContext.getColor(R.color.nim_background))
         }

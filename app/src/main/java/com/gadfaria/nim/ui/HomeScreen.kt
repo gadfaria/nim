@@ -31,9 +31,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Relógio movido por ACTION_TIME_TICK (o sistema emite a cada minuto).
- * Melhor que um loop com delay: não acorda a CPU à toa e acompanha
- * mudança de fuso, de hora manual e virada de dia de graça.
+ * Clock driven by ACTION_TIME_TICK (the system sends it every minute).
+ * Better than a delay loop: it doesn't wake the CPU for nothing and follows
+ * time zone changes, manual time changes and day rollover for free.
  */
 @Composable
 private fun rememberCurrentTime(): State<LocalDateTime> {
@@ -73,8 +73,8 @@ fun HomeScreen(
             .padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.Start,
     ) {
-        // Relógio no terço superior, favoritos embaixo: é onde o polegar
-        // alcança sem reposicionar a mão.
+        // Clock in the top third, favorites at the bottom: that's where the
+        // thumb reaches without repositioning the hand.
         Spacer(Modifier.weight(1f))
 
         Clock()
@@ -84,7 +84,7 @@ fun HomeScreen(
         favorites.forEach { app ->
             AppRow(
                 app = app,
-                // Tudo aqui é favorito por definição: o ponto seria ruído.
+                // Everything here is a favorite by definition: the dot would be noise.
                 isFavorite = false,
                 onLaunch = onLaunch,
                 onOpenMenu = onOpenMenu,
@@ -101,8 +101,8 @@ private fun Clock() {
     val context = LocalContext.current
     val locale = Locale.getDefault()
 
-    // 12h ou 24h é preferência do usuário no sistema, não do app — fixar "HH:mm"
-    // faz o relógio do launcher discordar do relógio da barra de status.
+    // 12h or 24h is the user's system preference, not the app's — hardcoding
+    // "HH:mm" makes the launcher clock disagree with the status bar clock.
     val use24h = DateFormat.is24HourFormat(context)
     val hourFormat = remember(locale, use24h) {
         DateTimeFormatter.ofPattern(if (use24h) "HH:mm" else "h:mm", locale)

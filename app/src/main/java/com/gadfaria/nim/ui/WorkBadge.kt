@@ -12,16 +12,16 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.gadfaria.nim.ui.theme.NimForegroundMuted
 
-/** Largura reservada pra marca em TODA linha, tenha ela marca ou não. */
+/** Width reserved for the badge on EVERY row, badged or not. */
 val WorkBadgeSlot = 22.dp
 
 /**
- * Marca de perfil de trabalho: uma pastinha desenhada, não um ícone de app.
+ * Work profile badge: a small drawn briefcase, not an app icon.
  *
- * Isso não contradiz a decisão de "sem ícones" do plano — o que foi descartado
- * lá era carregar e cachear um ícone POR APP, com adaptive icons e o pacote
- * inteiro de dor de performance. Aqui é uma forma só, vetorial, compartilhada
- * por todos os apps do perfil.
+ * This doesn't contradict the plan's "no icons" decision — what was dropped
+ * there was loading and caching an icon PER APP, with adaptive icons and the
+ * whole bundle of performance pain. This is a single vector shape, shared by
+ * every app in the profile.
  */
 @Composable
 fun WorkBadge(modifier: Modifier = Modifier) {
@@ -31,7 +31,7 @@ fun WorkBadge(modifier: Modifier = Modifier) {
         val stroke = w * 0.13f
         val bodyTop = h * 0.32f
 
-        // alça
+        // handle
         drawLine(
             color = NimForegroundMuted,
             start = Offset(w * 0.33f, bodyTop),
@@ -54,7 +54,7 @@ fun WorkBadge(modifier: Modifier = Modifier) {
             cap = StrokeCap.Round,
         )
 
-        // corpo
+        // body
         drawRoundRect(
             color = NimForegroundMuted,
             topLeft = Offset(stroke / 2, bodyTop),

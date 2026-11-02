@@ -10,14 +10,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Fundo sólido, não o papel de parede. Nem #000 nem #FFF: o preto puro abre um
-// buraco duro em OLED e o branco puro vibra em cima dele. Um cinza muito escuro
-// e um branco levemente quente dão o mesmo contraste sem a agressividade.
+// Solid background, not the wallpaper. Neither #000 nor #FFF: pure black punches
+// a harsh hole on OLED and pure white vibrates on top of it. A very dark gray
+// and a slightly warm white give the same contrast without the harshness.
 val NimBackground = Color(0xFF121212)
 val NimForeground = Color(0xFFE8E6E3)
 
-// A data é a mesma cor com menos presença — hierarquia sem inventar uma
-// terceira tinta na paleta.
+// The date is the same color with less presence — hierarchy without inventing
+// a third color in the palette.
 val NimForegroundMuted = Color(0x99E8E6E3)
 
 private val NimColors = darkColorScheme(
@@ -28,8 +28,8 @@ private val NimColors = darkColorScheme(
     primary = NimForeground,
 )
 
-// Tipografia é a interface inteira — sem ícones, o peso e o tamanho da fonte
-// são o único recurso visual que resta.
+// Typography is the whole interface — without icons, font weight and size are
+// the only visual tool left.
 val NimTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
@@ -37,7 +37,7 @@ val NimTypography = Typography(
         fontSize = 64.sp,
         letterSpacing = (-2).sp,
     ),
-    // Título de tela: bem menor que o relógio, que é o único display do app.
+    // Screen title: much smaller than the clock, which is the app's only display.
     headlineMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Light,
@@ -58,8 +58,8 @@ val NimTypography = Typography(
 )
 
 /**
- * O Nim é sempre escuro. Não segue o tema claro/escuro do sistema porque o
- * fundo é decisão do launcher, não preferência do aparelho.
+ * Nim is always dark. It doesn't follow the system light/dark theme because the
+ * background is the launcher's decision, not a device preference.
  */
 @Composable
 fun NimTheme(content: @Composable () -> Unit) {

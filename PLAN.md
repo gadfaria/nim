@@ -1,44 +1,44 @@
-# Nim — Launcher minimalista para Android
+# Nim — Minimalist Android launcher
 
-> Plano do MVP para uso pessoal. Escrito em 27/08/2026.
+> MVP plan for personal use. Written on 2026-08-27.
 
-**Stack decidida:** Kotlin + Jetpack Compose
-**Escopo do MVP:** home minimalista com favoritos + gaveta A–Z com busca
-**Ambiente:** Android Studio + emulador
+**Chosen stack:** Kotlin + Jetpack Compose
+**MVP scope:** minimalist home with favorites + A–Z drawer with search
+**Environment:** Android Studio + emulator
 
 ---
 
-## Decisão de design que carrega o resto
+## The design decision that carries the rest
 
-Launcher minimalista de verdade = **sem ícones**. Só texto.
+A truly minimalist launcher = **no icons**. Text only.
 
-Isso não é só estética: elimina carregamento e cache de ícones, adaptive icons,
-monochrome themes e o pacote inteiro de dor de performance na gaveta. A lista de
-apps vira `String` + `ComponentName`, e a UI fica trivial no Compose.
+This isn't just aesthetics: it removes icon loading and caching, adaptive icons,
+monochrome themes and the whole bundle of drawer performance pain. The app list
+becomes `String` + `ComponentName`, and the UI is trivial in Compose.
 
-Se depois você quiser ícones, dá pra adicionar. Começar com eles custa caro.
+If you want icons later, they can be added. Starting with them is expensive.
 
 ---
 
 ## Stack
 
-| Peça | Escolha | Por quê |
+| Piece | Choice | Why |
 |---|---|---|
-| UI | Compose (BOM mais recente) | Single Activity, zero XML de layout |
-| Lista de apps | `LauncherApps` | Melhor que `PackageManager.queryIntentActivities` — dá work profile, callbacks de install/uninstall e `startMainActivity` com origem correta |
-| Estado | ViewModel + `StateFlow` | Sem lib extra |
-| Persistência | DataStore (Preferences) | Favoritos e settings são meia dúzia de chaves; Room é exagero |
-| DI | Nenhuma | Manual. Hilt em app de 8 arquivos é peso morto |
-| minSdk / targetSdk | 26 / 37 | API 37 (Android 17) é a instalada — ver "Estado atual do ambiente" |
+| UI | Compose (latest BOM) | Single Activity, zero layout XML |
+| App list | `LauncherApps` | Better than `PackageManager.queryIntentActivities` — gives work profiles, install/uninstall callbacks and `startMainActivity` with the right origin |
+| State | ViewModel + `StateFlow` | No extra library |
+| Persistence | DataStore (Preferences) | Favorites and settings are half a dozen keys; Room is overkill |
+| DI | None | Manual. Hilt in an 8-file app is dead weight |
+| minSdk / targetSdk | 26 / 37 | API 37 (Android 17) is the one installed — see "Current environment state" |
 
 ---
 
-## Os detalhes que fazem "ser um launcher"
+## The details that make it "be a launcher"
 
-Nim não é um app normal. Os dois primeiros itens são `AndroidManifest.xml` e
-decidem se ele funciona; os outros dois decidem como ele se parece.
+Nim is not a regular app. The first two items live in `AndroidManifest.xml` and
+decide whether it works at all; the other two decide how it looks.
 
-### 1. Intent filter de HOME
+### 1. HOME intent filter
 
 ```xml
 <activity
@@ -56,10 +56,10 @@ decidem se ele funciona; os outros dois decidem como ele se parece.
 </activity>
 ```
 
-### 2. `<queries>` — a pegadinha nº 1
+### 2. `<queries>` — gotcha #1
 
-A partir da API 30 o Android esconde os apps instalados. Sem declarar isso,
-sua lista vem **vazia e sem erro nenhum**:
+Since API 30 Android hides installed apps. Without declaring this, your list
+comes back **empty with no error at all**:
 
 ```xml
 <queries>
@@ -70,87 +70,86 @@ sua lista vem **vazia e sem erro nenhum**:
 </queries>
 ```
 
-### 3. Fundo sólido — decisão revista no M1
+### 3. Solid background — decision revised in M1
 
-O plano original era `windowShowWallpaper=true` com fundo transparente. **Foi
-descartado:** o Nim tem fundo escuro sólido, sem papel de parede.
+The original plan was `windowShowWallpaper=true` with a transparent background.
+**It was dropped:** Nim has a solid dark background, no wallpaper.
 
-Isso não é só preferência — apaga uma classe inteira de problema. Com o
-wallpaper atrás, a cor do texto não pode vir de `isSystemInDarkTheme()` (o que
-está atrás do texto é a *imagem*, não o tema do sistema), e a alternativa
-correta era ler `WallpaperManager.getWallpaperColors()`, registrar
-`OnColorsChangedListener`, e ainda assim pôr sombra em toda tipografia porque
-a dica de cor é global e um trecho de alto contraste engole o texto. Tudo isso
-saiu do projeto. O contraste agora é conhecido em tempo de compilação.
+This isn't just preference — it erases a whole class of problems. With the
+wallpaper behind it, text color can't come from `isSystemInDarkTheme()` (what's
+behind the text is the *image*, not the system theme), and the correct
+alternative was to read `WallpaperManager.getWallpaperColors()`, register an
+`OnColorsChangedListener`, and still put a shadow on all typography because the
+color hint is global and a high-contrast patch swallows the text. All of that
+left the project. Contrast is now known at compile time.
 
 ```xml
 <item name="android:windowShowWallpaper">false</item>
 <item name="android:windowBackground">@color/nim_background</item>
 ```
 
-`windowBackground` tem que ser a **mesma cor** do Compose, senão a abertura
-pisca um flash de outra cor antes do primeiro frame.
+`windowBackground` must be the **same color** as in Compose, otherwise launch
+flashes a different color before the first frame.
 
-### 4. A paleta: nem `#000` nem `#FFF`
+### 4. The palette: neither `#000` nor `#FFF`
 
-| | Valor | Contraste medido |
+| | Value | Measured contrast |
 |---|---|---|
-| Fundo | `#121212` | — |
-| Texto | `#E8E6E3` | 14.6:1 |
-| Texto secundário | mesmo tom a 60% (`#92918F` sobre o fundo) | 5.7:1 |
+| Background | `#121212` | — |
+| Text | `#E8E6E3` | 14.6:1 |
+| Secondary text | same tone at 60% (`#92918F` over the background) | 5.7:1 |
 
-Preto puro abre um buraco duro em OLED e branco puro vibra em cima dele.
-`#121212` é o valor que o Material usa para superfície escura; o branco é
-levemente quente. Aferido por amostragem de pixel na captura do emulador, não
-no olho.
+Pure black punches a harsh hole on OLED and pure white vibrates on top of it.
+`#121212` is the value Material uses for dark surfaces; the white is slightly
+warm. Measured by pixel sampling on the emulator capture, not by eye.
 
-Só duas cores em todo o app. Sem ícones, hierarquia se faz com tamanho, peso e
-opacidade — nunca com uma tinta nova.
+Only two colors in the whole app. Without icons, hierarchy comes from size,
+weight and opacity — never from a new color.
 
-### Mais dois comportamentos
+### Two more behaviors
 
-- Botão **voltar** na home não faz nada — não pode dar `finish()`.
-- `onNewIntent` = usuário apertou HOME já estando no launcher → fecha a gaveta
-  e volta o scroll pro topo.
+- **Back** on the home does nothing — it must not `finish()`.
+- `onNewIntent` = the user pressed HOME while already in the launcher → close
+  the drawer and scroll back to the top.
 
 ---
 
-## Telas
+## Screens
 
 ```
 ┌─────────────────┐  swipe up  ┌─────────────────┐
-│                 │ ─────────► │ [ busca______ ] │
+│                 │ ─────────► │ [ search_____ ] │
 │      14:32      │            │ Calendar        │
-│   qui, 27 ago   │            │ Camera          │
+│   Thu, Aug 27   │            │ Camera          │
 │                 │            │ Chrome          │
 │                 │            │ …               │
-│  Mensagens      │ ◄───────── │ (A–Z, scroll)   │
-│  Chrome         │  swipe down└─────────────────┘
+│  Messages       │ ◄───────── │ (A–Z, scroll)   │
+│  Chrome         │ swipe down └─────────────────┘
 │  Spotify        │
-│  Câmera         │   long press em qualquer item →
-└─────────────────┘   favoritar · info do app · desinstalar
+│  Camera         │   long press on any item →
+└─────────────────┘   favorite · app info · uninstall
 ```
 
-**Busca:** normaliza (minúsculas + remove acentos) e ranqueia
-**prefixo > iniciais > contém**.
-`"wpp"` acha "WhatsApp". `"cam"` acha "Câmera" antes de "Scanner de Câmera".
+**Search:** normalizes (lowercase + strip accents) and ranks
+**prefix > initials > contains**.
+`"wpp"` finds "WhatsApp". `"cam"` finds "Câmera" before "Scanner de Câmera".
 
 ---
 
-## Estrutura de arquivos
+## File structure
 
 ```
 app/src/main/java/com/gadfaria/nim/
 ├─ MainActivity.kt          # single activity, HOME intent
 ├─ data/
 │  ├─ AppInfo.kt            # label, ComponentName, UserHandle
-│  ├─ AppRepository.kt      # LauncherApps + Callback de install/uninstall
-│  └─ Settings.kt           # DataStore: favoritos, prefs
+│  ├─ AppRepository.kt      # LauncherApps + install/uninstall Callback
+│  └─ Settings.kt           # DataStore: favorites, prefs
 ├─ ui/
 │  ├─ NimApp.kt             # host: home ⇄ drawer
-│  ├─ HomeScreen.kt         # relógio + favoritos
-│  ├─ DrawerScreen.kt       # busca + lista A–Z
-│  └─ theme/                # tipografia e as duas cores
+│  ├─ HomeScreen.kt         # clock + favorites
+│  ├─ DrawerScreen.kt       # search + A–Z list
+│  └─ theme/                # typography and the two colors
 └─ NimViewModel.kt
 ```
 
@@ -158,55 +157,55 @@ app/src/main/java/com/gadfaria/nim/
 
 ## Milestones
 
-| # | Entrega | Como sei que funcionou |
+| # | Deliverable | How I know it worked |
 |---|---|---|
-| **M0** ✅ | Android Studio + SDK + emulador (API 37) | `adb devices` lista o emulador |
-| **M1** ✅ | Projeto Nim vira HOME app | Aperto HOME no emulador → escolho Nim → aparece minha tela |
-| **M2** ✅ | Gaveta com apps reais, A–Z | Lista completa, toque abre o app |
-| **M3** ✅ | Busca | 2–3 letras filtram, Enter lança o primeiro resultado |
-| **M4** ✅ | Favoritos na home + relógio | Long press favorita, persiste após reiniciar |
-| **M5** ✅ | Polimento: menu de toque longo, marca de favorito, transições | Uso ele no dia a dia sem irritação |
+| **M0** ✅ | Android Studio + SDK + emulator (API 37) | `adb devices` lists the emulator |
+| **M1** ✅ | Nim project becomes a HOME app | Press HOME on the emulator → pick Nim → my screen shows up |
+| **M2** ✅ | Drawer with real apps, A–Z | Full list, tap opens the app |
+| **M3** ✅ | Search | 2–3 letters filter, Enter launches the first result |
+| **M4** ✅ | Favorites on home + clock | Long press favorites, persists after restart |
+| **M5** ✅ | Polish: long-press menu, favorite marker, transitions | I use it daily without annoyance |
 
-M0 é o único passo lento (download do SDK + imagem do emulador, alguns GB).
-M1–M4 são rápidos.
-
----
-
-## Fora do MVP (de propósito)
-
-Widgets · pastas · notificações e badges · ícones · gestos configuráveis ·
-backup de settings · tela de configurações completa.
-
-Tudo isso fica fácil depois que M1–M4 estiverem de pé — e nada disso é
-necessário pra você já usar o Nim como launcher padrão.
+M0 is the only slow step (SDK + emulator image download, a few GB).
+M1–M4 are quick.
 
 ---
 
-## Estado atual do ambiente
+## Out of the MVP (on purpose)
 
-Verificado em 27/08/2026 nesta máquina — **M0 concluído**:
+Widgets · folders · notifications and badges · icons · configurable gestures ·
+settings backup · full settings screen.
 
-- [x] Java / JDK — OpenJDK 25 embutido no Android Studio (`Contents/jbr`)
+All of that is easy once M1–M4 are up — and none of it is needed to start using
+Nim as the default launcher.
+
+---
+
+## Current environment state
+
+Checked on 2026-08-27 on this machine — **M0 done**:
+
+- [x] Java / JDK — OpenJDK 25 bundled with Android Studio (`Contents/jbr`)
 - [x] Android Studio 2026.1
-- [x] Android SDK em `~/Library/Android/sdk`
+- [x] Android SDK at `~/Library/Android/sdk`
       — platform-tools 37.0.1 · build-tools 36.0.0 · platform + sources android-37.0
       · cmdline-tools 23.0.0 · emulator 37.1.11
-- [x] `adb`, `emulator` e `avdmanager` no PATH (`ANDROID_HOME` + `JAVA_HOME` no `.zshrc`)
-- [x] Imagem de sistema `android-37.0;google_apis;arm64-v8a` (nativa, sem emulação de ABI)
-- [x] AVD **`nim`** — perfil Pixel 10, 4 GB RAM, heap 512 MB, GPU host, teclado do host ligado
+- [x] `adb`, `emulator` and `avdmanager` on the PATH (`ANDROID_HOME` + `JAVA_HOME` in `.zshrc`)
+- [x] System image `android-37.0;google_apis;arm64-v8a` (native, no ABI emulation)
+- [x] AVD **`nim`** — Pixel 10 profile, 4 GB RAM, 512 MB heap, host GPU, host keyboard on
 
-Critério do M0 atendido: `adb devices` lista `emulator-5554 device`, rodando
+M0 criterion met: `adb devices` lists `emulator-5554 device`, running
 Android 17 / API 37.
 
-Como subir o emulador de novo:
+How to bring the emulator back up:
 
 ```sh
 emulator -avd nim &
 adb wait-for-device
 ```
 
-O `set-home-activity` **não sobrevive ao reboot** do emulador: depois de cada
-reinício o launcher do sistema volta a ser a home e é preciso rodar de novo
+`set-home-activity` **does not survive an emulator reboot**: after each restart
+the system launcher becomes the home again and you have to run again
 
 ```sh
 adb shell cmd package set-home-activity com.gadfaria.nim/.MainActivity
@@ -214,197 +213,202 @@ adb shell cmd package set-home-activity com.gadfaria.nim/.MainActivity
 
 ---
 
-## Próximo passo
+## Next step
 
-**M5** — polimento: transição decente entre home e gaveta (hoje é `Crossfade`,
-que dissolve as duas ao mesmo tempo), e o menu de toque longo do mock com
-info do app e desinstalar.
+**M5** — polish: a decent transition between home and drawer (today it's a
+`Crossfade`, which dissolves both at the same time), and the mock's long-press
+menu with app info and uninstall.
 
 ---
 
-## O que o M2 acrescentou
+## What M2 added
 
-`LauncherApps` em vez de `PackageManager.queryIntentActivities` — a diferença
-aparece em três pontos:
+`LauncherApps` instead of `PackageManager.queryIntentActivities` — the
+difference shows up in three places:
 
-- **`profiles`** dá os perfis de trabalho. O mesmo `ComponentName` pode existir
-  duas vezes, um por perfil, e lançar no perfil errado abre o app errado. Por
-  isso o `UserHandle` entra na chave do `AppInfo`, não só o componente.
-- **`Callback`** avisa de instalação, desinstalação e renomeação. Verificado no
-  emulador: desabilitei o YouTube com a gaveta aberta e ele sumiu da lista sem
-  nenhum toque. Um launcher que só lê a lista no `onCreate` mostra apps que já
-  não existem.
-- **`startMainActivity`** recebe `sourceBounds`, então a animação de abertura
-  sai do item tocado em vez do centro da tela. Os bounds vêm do
-  `onGloballyPositioned` da linha.
+- **`profiles`** gives the work profiles. The same `ComponentName` can exist
+  twice, one per profile, and launching in the wrong profile opens the wrong
+  app. That's why the `UserHandle` is part of the `AppInfo` key, not just the
+  component.
+- **`Callback`** reports installs, uninstalls and renames. Verified on the
+  emulator: I disabled YouTube with the drawer open and it left the list
+  without a single tap. A launcher that only reads the list in `onCreate` shows
+  apps that no longer exist.
+- **`startMainActivity`** takes `sourceBounds`, so the opening animation starts
+  from the tapped item instead of the center of the screen. The bounds come from
+  the row's `onGloballyPositioned`.
 
-A ordenação usa `Collator` com força PRIMARY: um sort por código de caractere
-jogaria "Câmera" depois de "Z".
+Sorting uses a `Collator` with PRIMARY strength: a sort by character code would
+put "Câmera" after "Z".
 
-O gesto vertical (sobe abre, desce fecha) é o mínimo pra gaveta ser usável
-agora; a transição de verdade é do M5. Fechar também acontece pelo botão
-voltar e por apertar HOME dentro do Nim — este último devolve o scroll ao topo.
+The vertical gesture (up opens, down closes) is the minimum for the drawer to be
+usable now; the real transition belongs to M5. Closing also happens via the
+back button and by pressing HOME inside Nim — the latter resets the scroll to
+the top.
 
-## Busca e o abrir automático
+## Search and auto-launch
 
-O campo fica no topo da gaveta, recebe foco e abre o teclado junto com ela: a
-gaveta existe para digitar, não para rolar 300 nomes.
+The field sits at the top of the drawer, takes focus and opens the keyboard
+along with it: the drawer exists for typing, not for scrolling through 300
+names.
 
-### As camadas do ranqueamento
+### The ranking tiers
 
-Menor é melhor; dentro da mesma camada vale a ordem alfabética.
+Lower is better; within the same tier, alphabetical order applies.
 
-| # | Camada | Exemplo |
+| # | Tier | Example |
 |---|---|---|
-| 0 | prefixo do rótulo | `cam` → **Câmera** |
-| 1 | prefixo de uma palavra | `cam` → Scanner de **Câm**era |
-| 2 | iniciais | `gm` → **G**oogle **M**aps |
-| 3 | contém | `ame` → C**âme**ra |
+| 0 | label prefix | `cam` → **Câmera** |
+| 1 | word prefix | `cam` → Scanner de **Câm**era |
+| 2 | initials | `gm` → **G**oogle **M**aps |
+| 3 | contains | `ame` → C**âme**ra |
 
-A quebra em palavras separa corcovas de camelCase (`WhatsApp` → `whats`,`app`)
-mas não sequências de maiúsculas, para siglas como `YT` não virarem `Y`+`T`.
-É isso que faz `app` achar WhatsApp pela camada 1.
+Word splitting breaks camelCase humps (`WhatsApp` → `whats`,`app`) but not runs
+of capitals, so acronyms like `YT` don't become `Y`+`T`. That's what makes `app`
+find WhatsApp through tier 1.
 
-**Houve uma quinta camada, de subsequência**, que fazia `wpp` achar WhatsApp.
-Foi removida. Ela arrastava resultado frouxo para a lista — `gm` trazia Gemini
-por `g`…`e`…`m` — e resultado frouxo quebra o abrir automático: a tela passava
-a mostrar dois nomes e abrir um. O plano original citava `wpp`; na prática o
-custo não pagou. Hoje se acha WhatsApp por `wha` ou `app`.
+**There was a fifth tier, subsequence**, which made `wpp` find WhatsApp. It was
+removed. It dragged loose results into the list — `gm` brought Gemini via
+`g`…`e`…`m` — and loose results break auto-launch: the screen would show two
+names and open one. The original plan cited `wpp`; in practice the cost didn't
+pay off. Today WhatsApp is found by `wha` or `app`.
 
-Isso roda em `data/AppSearch.kt`, Kotlin puro sem nada de Android, porque os
-casos que importam dependem de apps que o emulador não tem — não dá pra
-verificar `wpp` achando WhatsApp com `adb`. Os 10 testes em
-`app/src/test/.../AppSearchTest.kt` cobrem cada camada:
+This runs in `data/AppSearch.kt`, plain Kotlin with nothing Android, because the
+cases that matter depend on apps the emulator doesn't have — you can't verify
+`wpp` finding WhatsApp with `adb`. The 10 tests in
+`app/src/test/.../AppSearchTest.kt` cover each tier:
 
 ```sh
 ./gradlew :app:testDebugUnitTest
 ```
 
-**Um único resultado abre o app sozinho**, depois de 150 ms sem digitação. O
-debounce é curto de propósito: só precisa cobrir o intervalo entre duas teclas
-de quem digita rápido, não dar tempo de pensar. Zerar dispararia no meio da
-palavra — `"gmail"` abriria já no `"gm"`.
+**A single result opens the app on its own**, after 150 ms without typing. The
+debounce is short on purpose: it only needs to cover the gap between two
+keystrokes of a fast typist, not give time to think. Zero would fire mid-word —
+`"gmail"` would already open at `"gm"`.
 
-A regra é literal: **abre quando a busca reduziu a lista a um nome**. Sem
-escolher entre resultados visíveis — o que está na tela é o que abre. `ca`
-deixa Calendar e Camera e não abre nada; `cal` abre o Calendar.
+The rule is literal: **it opens when the search has narrowed the list down to
+one name**. No picking among visible results — what's on screen is what opens.
+`ca` leaves Calendar and Camera and opens nothing; `cal` opens Calendar.
 
-Duas armadilhas que isso cria, ambas fechadas:
+Two traps this creates, both closed:
 
-- **O laço.** Se a busca sobrevivesse ao lançamento, voltar do app reabriria a
-  gaveta com um resultado só e dispararia de novo, prendendo o usuário. Por
-  isso lançar *sempre* fecha a gaveta e limpa a busca — inclusive no toque
-  normal e no Enter.
-- **A rolagem reancorada.** A `LazyColumn` com `key` mantém no topo o item que
-  lá estava quando o conteúdo muda. Filtrando até sobrar um app, ele vira a
-  âncora; ao limpar a busca a lista tenta mantê-lo no topo e bate no fim da
-  rolagem — a gaveta reabria no meio do alfabeto. O reset de rolagem tem que
-  acontecer **na abertura e a cada mudança da busca**, nunca no fechamento: ali
-  ele roda antes da reancoragem e é desfeito por ela.
+- **The loop.** If the search survived the launch, coming back from the app
+  would reopen the drawer with a single result and fire again, trapping the
+  user. That's why launching *always* closes the drawer and clears the search —
+  including on a normal tap and on Enter.
+- **The re-anchored scroll.** A `LazyColumn` with `key` keeps the item that was
+  at the top when the content changes. Filtering down to one app makes it the
+  anchor; when the search is cleared the list tries to keep it at the top and
+  hits the end of the scroll — the drawer reopened in the middle of the
+  alphabet. The scroll reset has to happen **on open and on every search
+  change**, never on close: there it runs before the re-anchoring and gets
+  undone by it.
 
-A normalização (minúsculas, sem acento) é calculada uma vez por app no
-carregamento, não a cada tecla — com centenas de apps, normalizar a lista
-inteira por caractere digitado é a diferença entre busca instantânea e busca
-engasgada.
+Normalization (lowercase, no accents) is computed once per app at load time,
+not on every keystroke — with hundreds of apps, normalizing the whole list per
+typed character is the difference between instant search and stuttering
+search.
 
-## Favoritos (M4)
+## Favorites (M4)
 
-Toque longo alterna o favorito, na gaveta e na home. Sem ícones e sem menu, o
-toque longo não tem retorno visual — a vibração é o único aviso de que algo
-aconteceu, então ela não é enfeite.
+Long press toggles the favorite, in the drawer and on the home. With no icons
+and no menu, the long press has no visual feedback — the vibration is the only
+sign that something happened, so it isn't decoration.
 
-A home mostra os favoritos **na ordem em que foram favoritados**, embaixo, onde
-o polegar alcança. Por isso o DataStore guarda uma lista com separador, não um
-`Set` de preferências: `Set` perderia a ordem a cada leitura.
+The home shows favorites **in the order they were favorited**, at the bottom,
+where the thumb reaches. That's why DataStore stores a delimited list, not a
+preferences `Set`: a `Set` would lose the order on every read.
 
-Duas decisões que valem registro:
+Two decisions worth recording:
 
-- **A chave é `ComponentName` + serial do perfil**, vindo de
-  `UserManager.getSerialNumberForUser()`. Antes era `user.hashCode()`, que
-  servia como chave de lista do Compose mas não presta como identidade em
-  disco: `hashCode` não tem contrato de estabilidade, e um favorito apontando
-  pro perfil errado depois de um reboot seria um bug silencioso.
-- **Chave sem app correspondente é ignorada, não apagada.** Um app pode estar
-  temporariamente indisponível — perfil de trabalho em modo silencioso,
-  atualização em curso — e apagar o favorito nesse momento perderia a escolha
-  do usuário por um sumiço passageiro. Ele reaparece sozinho quando o app volta.
+- **The key is `ComponentName` + profile serial**, from
+  `UserManager.getSerialNumberForUser()`. It used to be `user.hashCode()`, which
+  worked as a Compose list key but is no good as on-disk identity: `hashCode`
+  has no stability contract, and a favorite pointing to the wrong profile after
+  a reboot would be a silent bug.
+- **A key with no matching app is ignored, not deleted.** An app can be
+  temporarily unavailable — work profile in quiet mode, update in progress — and
+  deleting the favorite at that moment would lose the user's choice over a
+  passing disappearance. It comes back on its own when the app returns.
 
-Verificado com reboot de verdade do emulador: os favoritos voltam na ordem, e o
-que foi desfavoritado antes continua fora.
+Verified with a real emulator reboot: favorites come back in order, and the one
+unfavorited before stays out.
 
-## Perfil de trabalho
+## Work profile
 
-A gaveta sempre listou os dois perfis (é o que `LauncherApps.profiles` dá desde
-o M2), mas sem distinguir: no Pixel do dia a dia isso significava **Gmail,
-Drive, Agenda, Contatos, Files e Play Store aparecendo duas vezes, com o mesmo
-nome e nenhuma diferença visível**.
+The drawer has always listed both profiles (that's what `LauncherApps.profiles`
+has given since M2), but without telling them apart: on the daily Pixel this
+meant **Gmail, Drive, Calendar, Contacts, Files and Play Store showing up twice,
+with the same name and no visible difference**.
 
-Agora app de outro perfil leva uma pastinha desenhada na frente do nome. A
-detecção é `user != Process.myUserHandle()` — o jeito público de fazer isso,
-já que `UserManager.isManagedProfile(id)` não é API aberta.
+Now an app from another profile gets a small drawn folder before its name.
+Detection is `user != Process.myUserHandle()` — the public way to do it, since
+`UserManager.isManagedProfile(id)` isn't open API.
 
-Isso **não** contradiz o "sem ícones" do topo deste plano. O que foi descartado
-lá era carregar e cachear um ícone POR APP, com adaptive icons e o pacote de
-dor de performance junto. Aqui é uma forma vetorial só, compartilhada por todos
-os apps do perfil.
+This does **not** contradict the "no icons" at the top of this plan. What was
+dropped there was loading and caching an icon PER APP, with adaptive icons and
+the performance pain that comes with them. This is a single vector shape, shared
+by every app in the profile.
 
-O espaço da marca é reservado em toda linha, tenha ela marca ou não: sem isso
-os nomes dos apps de trabalho ficariam deslocados à direita dos demais.
+The badge space is reserved on every row, badged or not: without it the names
+of work apps would be shifted to the right of the others.
 
-Em empate de nome, o pessoal vem antes do de trabalho.
+On a name tie, personal comes before work.
 
-**Consequência no abrir automático:** app duplicado nos dois perfis nunca reduz
-a lista a um nome, então `cal` deixa de abrir a Agenda sozinha. Está certo —
-abrir o perfil errado seria pior —, mas é bom saber que vale para os 6 apps
-duplicados.
+**Consequence for auto-launch:** an app duplicated across both profiles never
+narrows the list to one name, so `cal` no longer opens Calendar on its own.
+That's right — opening the wrong profile would be worse — but it's worth
+knowing that it applies to the 6 duplicated apps.
 
-### Testar isso
+### Testing it
 
-O emulador `nim` ganhou um perfil de trabalho para esse fim:
+The `nim` emulator got a work profile for this purpose:
 
 ```sh
-adb shell pm create-user --profileOf 0 --managed Trabalho
+adb shell pm create-user --profileOf 0 --managed Work
 adb shell am start-user 10
-adb shell cmd package install-existing --user 10 <pacote>
+adb shell cmd package install-existing --user 10 <package>
 ```
 
-Com dois perfis, `adb install` sem `--user 0` tenta alcançar os dois e trava.
-Para remover: `adb shell pm remove-user 10`.
+With two profiles, `adb install` without `--user 0` tries to reach both and
+hangs. To remove it: `adb shell pm remove-user 10`.
 
-## Notas de build
+## Build notes
 
-- **AGP 9 tem Kotlin embutido.** Aplicar `org.jetbrains.kotlin.android` agora é
-  erro de configuração — o plugin foi removido do projeto. A versão do KGP vem
-  junto com o AGP; só o plugin do Compose continua declarado.
-- Toolchain fixada em `gradle/libs.versions.toml`: AGP 9.3.2 · Gradle 9.7.1 ·
+- **AGP 9 has Kotlin built in.** Applying `org.jetbrains.kotlin.android` is now
+  a configuration error — the plugin was removed from the project. The KGP
+  version comes with AGP; only the Compose plugin is still declared.
+- Toolchain pinned in `gradle/libs.versions.toml`: AGP 9.3.2 · Gradle 9.7.1 ·
   Compose BOM 2026.08.00 · `compileSdk`/`targetSdk` 37 · `minSdk` 26 · Java 17.
-- Build e instalação pelo terminal:
+- Build and install from the terminal:
   ```sh
   ./gradlew :app:assembleDebug
   adb install -r app/build/outputs/apk/debug/app-debug.apk
   adb shell cmd package set-home-activity com.gadfaria.nim/.MainActivity
   ```
-- Para devolver o launcher do sistema no emulador:
+- To give the emulator its system launcher back:
   ```sh
   adb shell cmd package set-home-activity com.google.android.apps.nexuslauncher/.NexusLauncherActivity
   ```
 
 ---
 
-## Pendências conhecidas
+## Known issues
 
-- Nenhuma aberta. O uso diário no aparelho é que vai dizer o que falta.
+- None open. Daily use on the device will tell what's missing.
 
 ---
 
-## Armadilha de gesto (M5)
+## Gesture trap (M5)
 
-Empilhar dois detectores no mesmo Box da home — `detectVerticalDragGestures`
-para abrir a gaveta e `detectTapGestures` para o toque longo — **não funciona**.
-Os dois recebem o mesmo toque, disputam quem consome, e o arrasto passa a
-falhar de forma intermitente: 6 tentativas seguidas sem abrir a gaveta, sem
-erro nenhum no log.
+Stacking two detectors on the same home Box — `detectVerticalDragGestures` to
+open the drawer and `detectTapGestures` for the long press — **doesn't work**.
+Both receive the same touch, fight over who consumes it, and the drag starts
+failing intermittently: 6 attempts in a row without opening the drawer, with no
+error in the log.
 
-A correção é um detector só (`ui/HomeGestures.kt`) que decide o que o gesto é:
-saiu do slop antes do tempo de toque longo, é arrasto; ficou parado até
-estourar, é toque longo. Depois disso, 6/6 no arrasto e 3/3 no toque longo.
+The fix is a single detector (`ui/HomeGestures.kt`) that decides what the
+gesture is: if it leaves the touch slop before the long-press timeout, it's a
+drag; if it stays still until the timeout, it's a long press. After that, 6/6 on
+drag and 3/3 on long press.

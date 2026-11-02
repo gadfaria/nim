@@ -31,8 +31,8 @@ fun DrawerScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            // O teclado cobre a lista sem isto — e é justamente a lista que o
-            // usuário está olhando enquanto digita.
+            // Without this the keyboard covers the list — and the list is exactly
+            // what the user is looking at while typing.
             .imePadding()
             .padding(horizontal = 28.dp),
     ) {

@@ -17,7 +17,7 @@ android {
 
     buildTypes {
         debug {
-            // Launcher de uso pessoal: o debug é o build que fica no aparelho.
+            // Personal-use launcher: the debug build is the one that stays on the device.
             isMinifyEnabled = false
         }
         release {

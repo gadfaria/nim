@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Fundo sólido: o launcher não mostra o papel de parede. O windowBackground
-         precisa ser a MESMA cor do Compose, senão a abertura pisca um flash de
-         outra cor antes do primeiro frame. -->
+    <!-- Solid background: the launcher doesn't show the wallpaper. windowBackground
+         must be the SAME color as in Compose, otherwise launch flashes a
+         different color before the first frame. -->
     <style name="Theme.Nim" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowShowWallpaper">false</item>
         <item name="android:windowBackground">@color/nim_background</item>
@@ -12,8 +12,9 @@
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <!-- Tela invisível da PinShortcutActivity: aceita o pedido e fecha sem
-         desenhar nada nem animar, então o usuário nem percebe que ela abriu. -->
+    <!-- PinShortcutActivity's invisible screen: it accepts the request and closes
+         without drawing or animating anything, so the user doesn't even notice
+         it opened. -->
     <style name="Theme.Nim.Translucent" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>

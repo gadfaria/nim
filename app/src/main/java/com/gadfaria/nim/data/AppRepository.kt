@@ -19,14 +19,15 @@ import kotlinx.coroutines.flow.conflate
 import java.text.Collator
 
 /**
- * A lista de apps do aparelho, vinda de [LauncherApps].
+ * The device's app list, from [LauncherApps].
  *
- * LauncherApps em vez de PackageManager.queryIntentActivities: dá os perfis de
- * trabalho, avisa de instalação/desinstalação por callback e lança pelo
- * startMainActivity, que registra a origem certa (o launcher) na animação.
+ * LauncherApps instead of PackageManager.queryIntentActivities: it gives the
+ * work profiles, reports installs/uninstalls through a callback and launches via
+ * startMainActivity, which records the right origin (the launcher) for the
+ * animation.
  *
- * Nada disso funciona sem o bloco <queries> no manifesto — sem ele a lista
- * volta vazia e sem erro nenhum.
+ * None of this works without the <queries> block in the manifest — without it
+ * the list comes back empty with no error at all.
  */
 class AppRepository(context: Context) {
 
@@ -39,28 +40,28 @@ class AppRepository(context: Context) {
         context.getSystemService(Context.USER_SERVICE) as UserManager
 
     /**
-     * O perfil em que o próprio launcher roda. Tudo que vier de outro perfil é
-     * trabalho — é o jeito público de fazer essa distinção, já que
-     * UserManager.isManagedProfile(id) não é API aberta.
+     * The profile the launcher itself runs in. Anything from another profile is
+     * work — this is the public way to tell them apart, since
+     * UserManager.isManagedProfile(id) isn't open API.
      */
     private val myUser = Process.myUserHandle()
 
-    // Ordenação alfabética de verdade: Collator põe "Câmera" junto de "Camera"
-    // e não depois de "Z", que é o que um sort por código de caractere faria.
+    // Real alphabetical order: Collator puts "Câmera" next to "Camera" and not
+    // after "Z", which is what a sort by character code would do.
     private val collator = Collator.getInstance().apply { strength = Collator.PRIMARY }
 
     private val byLabel = Comparator<AppInfo> { a, b ->
         collator.compare(a.label, b.label).takeIf { it != 0 }
-        // Mesmo nome nos dois perfis é o caso comum (Gmail, Drive, Agenda):
-        // o pessoal vem primeiro, sempre. Desempatar por ComponentName deixava
-        // a ordem arbitrária entre os dois "Gmail" da lista.
+        // The same name in both profiles is the common case (Gmail, Drive,
+        // Calendar): personal always comes first. Breaking ties by ComponentName
+        // left the order between the two "Gmail" rows arbitrary.
             ?: a.isWork.compareTo(b.isWork).takeIf { it != 0 }
             ?: a.componentName.compareTo(b.componentName)
     }
 
     /**
-     * Emite a lista atual e reemite a cada instalação, desinstalação ou
-     * renomeação. Um launcher que só lê no onCreate mostra apps fantasmas.
+     * Emits the current list and re-emits on every install, uninstall or
+     * rename. A launcher that only reads it in onCreate shows ghost apps.
      */
     val apps: Flow<List<AppInfo>> = callbackFlow {
         fun push() = trySend(load())
@@ -75,15 +76,15 @@ class AppRepository(context: Context) {
             override fun onPackagesUnavailable(
                 packageNames: Array<out String>?, user: UserHandle?, replacing: Boolean,
             ) = Unit.also { push() }
-            // Chega quando um atalho é fixado (a PinShortcutActivity aceitou),
-            // removido ou desativado pelo app dono.
+            // Fires when a shortcut is pinned (PinShortcutActivity accepted it),
+            // removed or disabled by its owner app.
             override fun onShortcutsChanged(
                 packageName: String, shortcuts: MutableList<ShortcutInfo>, user: UserHandle,
             ) = Unit.also { push() }
         }
 
-        // Handler explícito: o callback precisa de um Looper e a corrotina pode
-        // estar num dispatcher que não tem nenhum.
+        // Explicit Handler: the callback needs a Looper and the coroutine may be
+        // on a dispatcher that has none.
         launcherApps.registerCallback(callback, Handler(Looper.getMainLooper()))
         push()
         awaitClose { launcherApps.unregisterCallback(callback) }
@@ -93,8 +94,8 @@ class AppRepository(context: Context) {
         launcherApps.profiles
             .flatMap { user ->
                 val serial = userManager.getSerialNumberForUser(user)
-                // Pode falhar se o perfil sumir ou entrar em modo silencioso
-                // entre o callback e a leitura.
+                // Can fail if the profile disappears or enters quiet mode between
+                // the callback and the read.
                 val activities = runCatching { launcherApps.getActivityList(null, user) }
                     .getOrDefault(emptyList())
                     .map { activity ->
@@ -111,13 +112,13 @@ class AppRepository(context: Context) {
             .sortedWith(byLabel)
 
     /**
-     * Atalhos fixados no Nim, misturados aos apps na ordem alfabética — o
-     * usuário procura "Vault" pelo nome, sem saber (nem precisar saber) se
-     * virou WebAPK ou ficou como atalho do Chrome.
+     * Shortcuts pinned to Nim, mixed with the apps in alphabetical order — the
+     * user looks for "Vault" by name, without knowing (or needing to know)
+     * whether it became a WebAPK or stayed a Chrome shortcut.
      *
-     * Só o launcher padrão pode ler atalhos; fora disso getShortcuts lança
-     * SecurityException, e com o perfil de trabalho travado, IllegalStateException.
-     * Nos dois casos a gaveta segue só com os apps.
+     * Only the default launcher can read shortcuts; otherwise getShortcuts
+     * throws SecurityException, and with the work profile locked,
+     * IllegalStateException. Either way the drawer carries on with just the apps.
      */
     private fun loadPinnedShortcuts(user: UserHandle, serial: Long): List<AppInfo> {
         if (!launcherApps.hasShortcutHostPermission()) return emptyList()
@@ -127,14 +128,14 @@ class AppRepository(context: Context) {
         return runCatching { launcherApps.getShortcuts(query, user) }
             .getOrNull()
             .orEmpty()
-            // Desativado = o app dono desistiu dele (site removido, conta saiu).
-            // Mostrar um nome que não abre nada é pior que não mostrar.
+            // Disabled = the owner app gave up on it (site removed, account gone).
+            // Showing a name that opens nothing is worse than not showing it.
             .filter { it.isEnabled }
             .map { shortcut ->
                 AppInfo(
                     label = (shortcut.shortLabel ?: shortcut.longLabel ?: shortcut.id).toString(),
-                    // Sem activity, um ComponentName só com o pacote basta: a
-                    // tela de informações do app só olha o pacote.
+                    // Without an activity, a package-only ComponentName is enough:
+                    // the app info screen only looks at the package.
                     componentName = shortcut.activity ?: ComponentName(shortcut.`package`, ""),
                     user = user,
                     userSerial = serial,
@@ -145,8 +146,9 @@ class AppRepository(context: Context) {
     }
 
     /**
-     * [sourceBounds] é de onde a animação de abertura sai. Passar null faz o app
-     * crescer do centro da tela em vez de do item que foi tocado.
+     * [sourceBounds] is where the opening animation starts from. Passing null
+     * makes the app grow from the center of the screen instead of from the
+     * tapped item.
      */
     fun launch(app: AppInfo, sourceBounds: Rect? = null) {
         runCatching {
@@ -160,7 +162,7 @@ class AppRepository(context: Context) {
         }
     }
 
-    /** Abre a tela de detalhes do sistema. Via LauncherApps para acertar o perfil. */
+    /** Opens the system details screen. Through LauncherApps to get the profile right. */
     fun openAppInfo(app: AppInfo, sourceBounds: Rect? = null) {
         runCatching {
             launcherApps.startAppDetailsActivity(app.componentName, app.user, sourceBounds, null)
@@ -168,8 +170,8 @@ class AppRepository(context: Context) {
     }
 
     /**
-     * Pede a desinstalação. Quem confirma — e quem recusa, no caso de app de
-     * sistema — é o diálogo do Android; o Nim não apaga nada por conta própria.
+     * Requests the uninstall. Android's dialog is what confirms — and what
+     * refuses, for a system app; Nim deletes nothing on its own.
      */
     fun requestUninstall(app: AppInfo) {
         if (app.shortcutId != null) return unpin(app)
@@ -185,9 +187,9 @@ class AppRepository(context: Context) {
     }
 
     /**
-     * Desafixar um atalho é o "desinstalar" dele: não há app a remover, só o
-     * atalho a soltar. A API não tem "desafixe este": o launcher informa a
-     * lista inteira que continua fixada daquele pacote, sem o que sai.
+     * Unpinning a shortcut is its "uninstall": there's no app to remove, just
+     * the shortcut to drop. The API has no "unpin this one": the launcher passes
+     * the whole list that stays pinned for that package, minus the one leaving.
      */
     private fun unpin(app: AppInfo) {
         val packageName = app.componentName.packageName

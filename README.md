@@ -1,62 +1,62 @@
 # Nim
 
-Launcher minimalista para Android, só texto. Sem ícones, sem widgets: um
-relógio, seus favoritos e uma gaveta A–Z com busca.
+A minimalist, text-only Android launcher. No icons, no widgets: a clock, your
+favorites and an A–Z drawer with search.
 
-Feito em Kotlin + Jetpack Compose, para uso pessoal.
+Built with Kotlin + Jetpack Compose, for personal use.
 
-## O que faz
+## Features
 
-- **Home** com relógio, data e favoritos embaixo, onde o polegar alcança.
-- **Gaveta A–Z** (arrastar para cima) com busca que já abre o teclado.
-  Ranqueia prefixo do nome > prefixo de palavra > iniciais > contém, e ignora
-  acentos: `cam` acha Câmera, `gm` acha Google Maps.
-- **Abre sozinho** quando a busca reduz a lista a um único app.
-- **Toque longo** num app: favoritar, info do app ou desinstalar.
-- **Perfil de trabalho**: apps do outro perfil levam uma marca de pasta.
-- **Atalhos fixados**: aceita "Adicionar à tela inicial" do Chrome (PWAs) e
-  mostra os atalhos na gaveta.
-- **Configurações** (toque longo no vazio da home): reordenar favoritos por
-  arrasto e usar o fundo do Nim como papel de parede.
+- **Home** with clock, date and favorites at the bottom, within thumb reach.
+- **A–Z drawer** (swipe up) with search that opens the keyboard right away.
+  Ranks label prefix > word prefix > initials > contains, ignoring accents:
+  `cam` finds Câmera, `gm` finds Google Maps.
+- **Auto-launch** when the search narrows the list down to a single app.
+- **Long press** on an app: favorite, app info or uninstall.
+- **Work profile**: apps from the other profile get a folder badge.
+- **Pinned shortcuts**: accepts Chrome's "Add to home screen" (PWAs) and lists
+  the shortcuts in the drawer.
+- **Settings** (long press on empty home space): reorder favorites by dragging
+  and use Nim's background as the wallpaper.
 
-Fundo `#121212`, texto `#E8E6E3`. Só duas cores no app inteiro.
+Background `#121212`, text `#E8E6E3`. Only two colors in the whole app.
 
-## Requisitos
+## Requirements
 
 - Android 8.0+ (minSdk 26, targetSdk 37)
-- JDK 17 e Android SDK 37 (Android Studio já traz os dois)
+- JDK 17 and Android SDK 37 (Android Studio ships both)
 
-## Build e instalação
+## Build and install
 
 ```sh
 ./gradlew :app:assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Depois aperte HOME no aparelho e escolha o Nim, ou defina pelo adb:
+Then press HOME on the device and pick Nim, or set it through adb:
 
 ```sh
 adb shell cmd package set-home-activity com.gadfaria.nim/.MainActivity
 ```
 
-## Testes
+## Tests
 
 ```sh
 ./gradlew :app:testDebugUnitTest
 ```
 
-Cobrem as camadas da busca (`data/AppSearch.kt`, Kotlin puro).
+They cover the search ranking tiers (`data/AppSearch.kt`, plain Kotlin).
 
-## Estrutura
+## Structure
 
 ```
 app/src/main/java/com/gadfaria/nim/
-├─ MainActivity.kt         # activity única, intent de HOME
-├─ PinShortcutActivity.kt  # recebe pedidos de atalho fixado
+├─ MainActivity.kt         # single activity, HOME intent
+├─ PinShortcutActivity.kt  # handles pin shortcut requests
 ├─ NimViewModel.kt
-├─ data/                   # LauncherApps, busca, DataStore, papel de parede
-└─ ui/                     # home, gaveta, menu, configurações, tema
+├─ data/                   # LauncherApps, search, DataStore, wallpaper
+└─ ui/                     # home, drawer, menu, settings, theme
 ```
 
-As decisões de design e as armadilhas encontradas no caminho estão em
+Design decisions and the pitfalls found along the way are in
 [PLAN.md](PLAN.md).

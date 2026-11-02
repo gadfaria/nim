@@ -11,14 +11,14 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 
 /**
- * Os dois gestos da home — arrastar pra cima abre a gaveta, segurar abre as
- * configurações — num detector só.
+ * The home's two gestures — swipe up opens the drawer, hold opens settings — in
+ * a single detector.
  *
- * Empilhar `detectVerticalDragGestures` e `detectTapGestures` no mesmo Box não
- * funciona: os dois recebem o mesmo toque, disputam quem consome, e o arrasto
- * passa a falhar de forma intermitente. Aqui o próprio gesto decide o que é:
- * saiu do slop antes do tempo, é arrasto; ficou parado até estourar, é toque
- * longo.
+ * Stacking `detectVerticalDragGestures` and `detectTapGestures` on the same Box
+ * doesn't work: both receive the same touch, fight over who consumes it, and the
+ * drag starts failing intermittently. Here the gesture itself decides what it
+ * is: if it leaves the slop before the timeout, it's a drag; if it stays still
+ * until the timeout, it's a long press.
  */
 fun Modifier.homeGestures(
     swipeUpThresholdPx: Float,
@@ -29,9 +29,9 @@ fun Modifier.homeGestures(
         val down = awaitFirstDown(requireUnconsumed = false)
         var totalY = 0f
 
-        // null = estourou o tempo com o dedo parado (toque longo)
-        // true = virou arrasto
-        // false = soltou antes de qualquer um dos dois (toque simples)
+        // null = timed out with the finger still (long press)
+        // true = became a drag
+        // false = released before either (plain tap)
         val becameDrag = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
             var drag = false
             while (true) {
@@ -49,10 +49,10 @@ fun Modifier.homeGestures(
 
         when (becameDrag) {
             null -> {
-                // Down já consumido = o toque começou numa linha de app, que
-                // tem o próprio toque longo (o menu). O timeout daqui corre em
-                // paralelo ao dela, então sem esta checagem os dois disparavam:
-                // o menu abria por cima das configurações, e voltar caía nelas.
+                // Down already consumed = the touch started on an app row, which
+                // has its own long press (the menu). This timeout runs in
+                // parallel with the row's, so without this check both fired: the
+                // menu opened on top of settings, and back landed on them.
                 if (!down.isConsumed) onLongPress()
                 consumeUntilUp(down.id)
             }

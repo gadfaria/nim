@@ -18,9 +18,9 @@ import androidx.compose.ui.unit.dp
 import com.gadfaria.nim.ui.theme.NimForegroundMuted
 
 /**
- * Campo de busca da gaveta. BasicTextField em vez do TextField do Material
- * porque o Material traz caixa, borda e label — tudo que um launcher sem
- * ícones não quer.
+ * The drawer's search field. BasicTextField instead of Material's TextField
+ * because Material brings a box, border and label — everything an icon-free
+ * launcher doesn't want.
  */
 @Composable
 fun SearchField(

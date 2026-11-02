@@ -1,1 +1,1 @@
-# Nada específico ainda — o launcher não usa reflexão nem serialização.
+# Nothing specific yet — the launcher uses no reflection or serialization.

@@ -12,18 +12,18 @@ import kotlinx.coroutines.flow.map
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "nim")
 
 /**
- * Preferências do launcher. Hoje só os favoritos; DataStore porque são meia
- * dúzia de chaves e Room seria exagero.
+ * Launcher preferences. Only favorites for now; DataStore because it's half a
+ * dozen keys and Room would be overkill.
  */
 class Settings(private val context: Context) {
 
     /**
-     * Guardado como lista, não como Set: a ordem é a de favoritar, e é ela que
-     * a home mostra. Um Set de preferências perderia essa ordem em cada
-     * leitura.
+     * Stored as a list, not a Set: the order is the favoriting order, and it's
+     * what the home shows. A preferences Set would lose that order on every
+     * read.
      *
-     * `\n` como separador é seguro — a chave é um ComponentName achatado mais
-     * o serial do perfil, e nenhum dos dois contém quebra de linha.
+     * `\n` as a separator is safe — the key is a flattened ComponentName plus
+     * the profile serial, and neither contains a line break.
      */
     private val favoritesKey = stringPreferencesKey("favorites")
 
@@ -31,7 +31,7 @@ class Settings(private val context: Context) {
         prefs[favoritesKey]?.split(SEPARATOR)?.filter { it.isNotEmpty() } ?: emptyList()
     }
 
-    /** Grava a ordem inteira de uma vez — é o que o reordenar por arrasto produz. */
+    /** Writes the whole order at once — that's what drag-to-reorder produces. */
     suspend fun setFavorites(keys: List<String>) {
         context.dataStore.edit { prefs ->
             prefs[favoritesKey] = keys.joinToString(SEPARATOR)

@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** As três telas do launcher. Não há navegação aninhada: é sempre uma delas. */
+/** The launcher's three screens. No nested navigation: it's always one of them. */
 enum class Screen { HOME, DRAWER, SETTINGS }
 
 class NimViewModel(application: Application) : AndroidViewModel(application) {
@@ -33,8 +33,9 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
 
     private val allApps: StateFlow<List<AppInfo>> = repository.apps.stateIn(
         scope = viewModelScope,
-        // O launcher volta ao primeiro plano o tempo todo. Manter a assinatura
-        // viva por alguns segundos evita reler a lista inteira a cada volta.
+        // The launcher comes back to the foreground all the time. Keeping the
+        // subscription alive for a few seconds avoids rereading the whole list
+        // on every return.
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = emptyList(),
     )
@@ -56,23 +57,23 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /**
-     * O app a abrir sozinho: único na melhor camada do ranqueamento.
+     * The app to auto-launch: the only one in the best ranking tier.
      *
-     * Não é "a lista inteira tem um item". Com subsequência na busca, "gm" traz
-     * Gmail (prefixo) e Gemini (g...m) — a lista tem dois, mas só um é o
-     * resultado óbvio, e é ele que deve abrir.
+     * It isn't "the whole list has one item". With subsequence in the search,
+     * "gm" brings Gmail (prefix) and Gemini (g...m) — the list has two, but only
+     * one is the obvious result, and that's the one that should open.
      */
     val unambiguousMatch: StateFlow<AppInfo?> = ranked
         .map { it.unambiguous }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     /**
-     * Favoritos resolvidos para apps, na ordem em que foram favoritados.
+     * Favorites resolved to apps, in the order they were favorited.
      *
-     * Chave sem app correspondente é ignorada, não apagada: um app pode estar
-     * temporariamente indisponível (perfil de trabalho em modo silencioso,
-     * atualização em curso) e apagar o favorito aí perderia a escolha do
-     * usuário por um sumiço passageiro.
+     * A key with no matching app is ignored, not deleted: an app can be
+     * temporarily unavailable (work profile in quiet mode, update in progress)
+     * and deleting the favorite then would lose the user's choice over a passing
+     * disappearance.
      */
     val favorites: StateFlow<List<AppInfo>> =
         combine(allApps, settings.favoriteKeys) { apps, keys ->
@@ -95,7 +96,7 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
 
     fun openSettings() { _screen.value = Screen.SETTINGS }
 
-    /** Voltar pra home sempre limpa a busca: a gaveta reabre em branco. */
+    /** Going home always clears the search: the drawer reopens blank. */
     fun goHome() {
         _screen.value = Screen.HOME
         _query.value = ""
@@ -113,7 +114,7 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
 
     fun requestUninstall(app: AppInfo) = repository.requestUninstall(app)
 
-    /** Devolve se deu certo, para a tela de configurações dizer o que houve. */
+    /** Returns whether it worked, so the settings screen can say what happened. */
     suspend fun applyNimWallpaper(): Boolean =
         withContext(Dispatchers.IO) { homeWallpaper.applyNimBackground() }
 }

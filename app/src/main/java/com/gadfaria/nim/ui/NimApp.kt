@@ -37,18 +37,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Espera o usuário parar de digitar antes de abrir sozinho. Curto de propósito:
- * só precisa cobrir o intervalo entre duas teclas de quem digita rápido, não
- * dar tempo de pensar. Zerar dispara no meio de uma palavra — "gmail" abriria
- * já no "gm".
+ * Waits for the user to stop typing before auto-launching. Short on purpose: it
+ * only needs to cover the gap between two keystrokes of a fast typist, not give
+ * time to think. Zero fires mid-word — "gmail" would already open at "gm".
  */
 private const val AUTO_LAUNCH_DELAY_MS = 150L
 
 /**
- * Host da home e da gaveta. A troca é por gesto vertical: sobe abre, desce fecha.
+ * Host for the home and the drawer. Switching is by vertical gesture: up opens,
+ * down closes.
  *
- * O gesto aqui é o mínimo que torna a gaveta usável — a transição animada de
- * verdade é assunto do M5.
+ * The gesture here is the minimum that makes the drawer usable — the real
+ * animated transition belongs to M5.
  */
 @Composable
 fun NimApp(
@@ -67,8 +67,8 @@ fun NimApp(
     val keyboard = LocalSoftwareKeyboardController.current
     val searchFocus = remember { FocusRequester() }
 
-    // App do menu de toque longo, se algum estiver aberto. Guarda os bounds
-    // junto porque as ações do menu também animam a partir da linha tocada.
+    // App for the long-press menu, if one is open. Keeps the bounds alongside
+    // because the menu actions also animate from the tapped row.
     var menuApp by remember { mutableStateOf<Pair<AppInfo, Rect?>?>(null) }
 
     fun goHome() {
@@ -77,16 +77,17 @@ fun NimApp(
         viewModel.goHome()
     }
 
-    // Lançar SEMPRE fecha a gaveta e limpa a busca. Se a busca sobrevivesse ao
-    // lançamento, voltar do app reabriria a gaveta com um resultado só e o
-    // auto-abrir dispararia de novo: o usuário ficaria preso num laço.
+    // Launching ALWAYS closes the drawer and clears the search. If the search
+    // survived the launch, coming back from the app would reopen the drawer with
+    // a single result and auto-launch would fire again: the user would be stuck
+    // in a loop.
     fun launchAndClose(app: AppInfo, bounds: Rect?) {
         viewModel.launch(app, bounds)
         goHome()
     }
 
-    // Abriu a gaveta: foco no campo e teclado na tela. A gaveta é para digitar,
-    // não para rolar 300 nomes.
+    // Drawer opened: focus the field and show the keyboard. The drawer is for
+    // typing, not for scrolling through 300 names.
     LaunchedEffect(screen) {
         if (screen == Screen.DRAWER) {
             searchFocus.requestFocus()
@@ -94,20 +95,20 @@ fun NimApp(
         }
     }
 
-    // A lista sempre começa do topo: ao abrir e a cada mudança da busca.
+    // The list always starts at the top: on open and on every search change.
     //
-    // Isto NÃO pode ser feito no fechamento. A LazyColumn com `key` reancora a
-    // rolagem no item que estava no topo quando o conteúdo muda: filtrando até
-    // sobrar um app, ele vira a âncora, e ao limpar a busca a lista tenta
-    // mantê-lo no topo, batendo no fim da rolagem. Um scrollToItem(0) disparado
-    // antes dessa reancoragem é simplesmente desfeito por ela.
+    // This CANNOT be done on close. A LazyColumn with `key` re-anchors the
+    // scroll on the item that was at the top when the content changes: filtering
+    // down to one app makes it the anchor, and when the search is cleared the
+    // list tries to keep it at the top, hitting the end of the scroll. A
+    // scrollToItem(0) fired before that re-anchoring is simply undone by it.
     LaunchedEffect(screen, query) {
         if (screen == Screen.DRAWER) listState.scrollToItem(0)
     }
 
-    // Um resultado inequívoco abre sozinho. As chaves do efeito são a busca e o
-    // próprio resultado: mudou qualquer um, o timer reinicia — é isso que faz o
-    // debounce, sem precisar de operador de flow.
+    // An unambiguous result opens on its own. The effect's keys are the search
+    // and the result itself: if either changes, the timer restarts — that's what
+    // does the debounce, with no flow operator needed.
     LaunchedEffect(screen, query, unambiguous) {
         if (screen != Screen.DRAWER || query.isBlank()) return@LaunchedEffect
         val target = unambiguous ?: return@LaunchedEffect
@@ -115,21 +116,21 @@ fun NimApp(
         launchAndClose(target, null)
     }
 
-    // Apertar HOME já estando no Nim volta pra home limpa. Sem isto o usuário
-    // aperta HOME e continua vendo a gaveta onde parou.
+    // Pressing HOME while already in Nim returns to a clean home. Without this
+    // the user presses HOME and still sees the drawer where they left it.
     LaunchedEffect(homePresses) {
         homePresses.collect { goHome() }
     }
 
-    // Voltar devolve pra home, venha da gaveta ou das configurações. Já na
-    // home ele não faz nada — quem garante isso é o callback no-op da
-    // MainActivity, que fica embaixo deste na pilha.
+    // Back returns to the home, from the drawer or from settings. On the home
+    // itself it does nothing — that's ensured by MainActivity's no-op callback,
+    // which sits below this one in the stack.
     BackHandler(enabled = screen != Screen.HOME) { goHome() }
 
     val threshold = with(LocalDensity.current) { 56.dp.toPx() }
 
-    // Puxar a lista pra baixo já no topo fecha a gaveta. Via nested scroll
-    // porque quem recebe o arrasto primeiro é a LazyColumn, não este Box.
+    // Pulling the list down while already at the top closes the drawer. Via
+    // nested scroll because the LazyColumn gets the drag first, not this Box.
     val pullDownToClose = remember(threshold) {
         object : NestedScrollConnection {
             private var overscroll = 0f
@@ -154,9 +155,10 @@ fun NimApp(
 
     AnimatedContent(
         targetState = screen,
-        // Crossfade dissolvia as duas telas ao mesmo tempo e dava pra ler a
-        // lista de apps por trás do relógio. Aqui a que sai termina antes de a
-        // que entra aparecer, e a gaveta desliza na direção do próprio gesto.
+        // Crossfade dissolved both screens at the same time and the app list
+        // was readable behind the clock. Here the outgoing one finishes before
+        // the incoming one appears, and the drawer slides in its gesture's
+        // direction.
         transitionSpec = {
             when {
                 targetState == Screen.DRAWER ->
@@ -202,9 +204,9 @@ fun NimApp(
                 modifier = modifier.fillMaxSize(),
             )
 
-            // Segurar no vazio da home abre as configurações — a convenção de
-            // launcher. Sobre um favorito não dispara: a linha consome o down,
-            // e o homeGestures deixa o toque longo pra ela (o menu).
+            // Holding on empty home space opens settings — the launcher
+            // convention. It doesn't fire over a favorite: the row consumes the
+            // down, and homeGestures leaves the long press to it (the menu).
             Screen.HOME -> Box(
                 modifier = modifier
                     .fillMaxSize()
@@ -227,7 +229,7 @@ fun NimApp(
     }
 
     menuApp?.let { (app, bounds) ->
-        // Voltar fecha o menu antes de mexer na tela de baixo.
+        // Back closes the menu before touching the screen below.
         BackHandler { menuApp = null }
 
         AppMenu(

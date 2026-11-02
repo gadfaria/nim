@@ -5,14 +5,14 @@ import android.content.pm.LauncherApps
 import android.os.Bundle
 
 /**
- * Atende os pedidos de "fixar atalho" (ShortcutManager.requestPinShortcut).
+ * Handles "pin shortcut" requests (ShortcutManager.requestPinShortcut).
  *
- * O app que pede já mostrou o próprio diálogo de confirmação (o "Instalar" do
- * Chrome, por exemplo), então aqui não há UI: aceita e fecha. No caso de PWA,
- * aceitar já basta — o Chrome instala o WebAPK e ele aparece na gaveta pelo
- * LauncherApps.Callback do AppRepository, como qualquer outro app.
+ * The requesting app has already shown its own confirmation dialog (Chrome's
+ * "Install", for example), so there's no UI here: accept and close. For a PWA,
+ * accepting is enough — Chrome installs the WebAPK and it shows up in the drawer
+ * through AppRepository's LauncherApps.Callback, like any other app.
  *
- * Pedidos de widget (CONFIRM_PIN_APPWIDGET) não chegam aqui: o Nim não tem widgets.
+ * Widget requests (CONFIRM_PIN_APPWIDGET) don't arrive here: Nim has no widgets.
  */
 class PinShortcutActivity : Activity() {
 
@@ -24,7 +24,7 @@ class PinShortcutActivity : Activity() {
             request.isValid &&
             request.requestType == LauncherApps.PinItemRequest.REQUEST_TYPE_SHORTCUT
         ) {
-            // accept() pode lançar se o pedido expirar entre a checagem e a chamada.
+            // accept() can throw if the request expires between the check and the call.
             runCatching { request.accept() }
         }
 
