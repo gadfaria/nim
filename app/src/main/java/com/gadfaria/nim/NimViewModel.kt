@@ -57,11 +57,9 @@ class NimViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /**
-     * The app to auto-launch: the only one in the best ranking tier.
-     *
-     * It isn't "the whole list has one item". With subsequence in the search,
-     * "gm" brings Gmail (prefix) and Gemini (g...m) — the list has two, but only
-     * one is the obvious result, and that's the one that should open.
+     * The app to auto-launch: set only when the search narrowed the list down to
+     * a single name. What's on screen is what opens — "gm" shows Gmail and
+     * Google Maps, so nothing opens even though Gmail ranks higher.
      */
     val unambiguousMatch: StateFlow<AppInfo?> = ranked
         .map { it.unambiguous }
