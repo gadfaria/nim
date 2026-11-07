@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Mirrors NimBackground in ui/theme/Theme.kt — the two must match. -->
-    <color name="nim_background">#121212</color>
-    <color name="ic_launcher_background">#121212</color>
+    <!-- Mirrors Background in ui/theme/Theme.kt — the two must match. -->
+    <color name="nim_background">#0A0A0A</color>
+    <color name="ic_launcher_background">#0A0A0A</color>
 </resources>

@@ -91,20 +91,39 @@ left the project. Contrast is now known at compile time.
 `windowBackground` must be the **same color** as in Compose, otherwise launch
 flashes a different color before the first frame.
 
-### 4. The palette: neither `#000` nor `#FFF`
+### 4. The palette: shadcn/ui neutral — revised on 2026-11-07
 
-| | Value | Measured contrast |
+Nim started with two colors (`#121212` background, `#E8E6E3` text, the same
+tone at 60% for secondary text). It now uses the same tokens as the author's
+web apps (hub, built with shadcn/ui, style `radix-nova`, base color `neutral`)
+and Nim TV, so all of them share one look:
+
+| Token | Value | Use |
 |---|---|---|
-| Background | `#121212` | — |
-| Text | `#E8E6E3` | 14.6:1 |
-| Secondary text | same tone at 60% (`#92918F` over the background) | 5.7:1 |
+| background | `#0A0A0A` | screen, cards |
+| foreground | `#FAFAFA` | text |
+| muted-foreground | `#A1A1A1` | date, group labels, descriptions, badges |
+| accent | `#262626` | row background while pressed |
+| border | white 10% | card outline, separators |
+| input | white 15% | search field outline |
+| ring | `#737373` | search field outline when focused |
+| destructive | `#FF6467` | "Desinstalar" / "Remover atalho" |
 
-Pure black punches a harsh hole on OLED and pure white vibrates on top of it.
-`#121212` is the value Material uses for dark surfaces; the white is slightly
-warm. Measured by pixel sampling on the emulator capture, not by eye.
+Font: Geist (Light for the clock, Regular for rows, Medium for titles and
+labels), bundled in `res/font`. Radius scale from `--radius: 0.5rem`: 6dp for
+rows, 8dp for the search field, 12dp for cards.
 
-Only two colors in the whole app. Without icons, hierarchy comes from size,
-weight and opacity — never from a new color.
+Still no icons: hierarchy comes from size, weight and the muted color.
+shadcn's hover/active state becomes touch feedback — the accent background
+shows while the finger is down (`pressHighlight` in `ui/Card.kt`). In the
+drawer the press is delayed until the gesture is clearly not a scroll, so
+scrolling doesn't flash rows.
+
+Settings sections sit in cards with a group label, like hub's sidebar. On the
+home the favorites keep the label but drop the card border and the press
+highlight, so they read as a plain list under the clock; the long-press menu is a card at the bottom with the destructive
+action below a separator. The home is signed "powered by gadfaria" in the
+bottom-left, as in Nim TV.
 
 ### Two more behaviors
 
@@ -149,7 +168,8 @@ app/src/main/java/com/gadfaria/nim/
 │  ├─ NimApp.kt             # host: home ⇄ drawer
 │  ├─ HomeScreen.kt         # clock + favorites
 │  ├─ DrawerScreen.kt       # search + A–Z list
-│  └─ theme/                # typography and the two colors
+│  ├─ Card.kt               # card, group label, separator, press feedback
+│  └─ theme/                # shadcn tokens, Geist, radius scale
 └─ NimViewModel.kt
 ```
 
@@ -342,7 +362,7 @@ has given since M2), but without telling them apart: on the daily Pixel this
 meant **Gmail, Drive, Calendar, Contacts, Files and Play Store showing up twice,
 with the same name and no visible difference**.
 
-Now an app from another profile gets a small drawn folder before its name.
+Now an app from another profile gets a small drawn briefcase after its name.
 Detection is `user != Process.myUserHandle()` — the public way to do it, since
 `UserManager.isManagedProfile(id)` isn't open API.
 
@@ -351,8 +371,10 @@ dropped there was loading and caching an icon PER APP, with adaptive icons and
 the performance pain that comes with them. This is a single vector shape, shared
 by every app in the profile.
 
-The badge space is reserved on every row, badged or not: without it the names
-of work apps would be shifted to the right of the others.
+The badge sits after the name, like the favorite dot, so every name starts on
+the same column as the search field and the card labels. (It used to sit in
+front, with its space reserved on every row; that put the names out of line
+with the group labels once favorites moved into a card.)
 
 On a name tie, personal comes before work.
 

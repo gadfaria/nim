@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowInsetsControllerCompat
 import com.gadfaria.nim.ui.NimApp
-import com.gadfaria.nim.ui.theme.NimBackground
+import com.gadfaria.nim.ui.theme.Background
 import com.gadfaria.nim.ui.theme.NimTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(NimBackground)
+                        .background(Background)
                         .systemBarsPadding()
                 ) {
                     NimApp(

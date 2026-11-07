@@ -34,13 +34,14 @@ fun DrawerScreen(
             // Without this the keyboard covers the list — and the list is exactly
             // what the user is looking at while typing.
             .imePadding()
-            .padding(horizontal = 28.dp),
+            .padding(horizontal = 16.dp),
     ) {
         SearchField(
             query = query,
             onQueryChange = onQueryChange,
             onSubmit = { apps.firstOrNull()?.let { onLaunch(it, null) } },
             focusRequester = searchFocusRequester,
+            modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
         )
 
         LazyColumn(

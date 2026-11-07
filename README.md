@@ -13,13 +13,16 @@ Built with Kotlin + Jetpack Compose, for personal use.
   `cam` finds Câmera, `gm` finds Google Maps.
 - **Auto-launch** when the search narrows the list down to a single app.
 - **Long press** on an app: favorite, app info or uninstall.
-- **Work profile**: apps from the other profile get a folder badge.
+- **Work profile**: apps from the other profile get a small briefcase badge after the name.
 - **Pinned shortcuts**: accepts Chrome's "Add to home screen" (PWAs) and lists
   the shortcuts in the drawer.
 - **Settings** (long press on empty home space): reorder favorites by dragging
   and use Nim's background as the wallpaper.
 
-Background `#121212`, text `#E8E6E3`. Only two colors in the whole app.
+Styled after shadcn/ui's `neutral` dark theme (the same tokens as the author's
+web apps and Nim TV): background `#0A0A0A`, text `#FAFAFA`, muted `#A1A1A1`,
+accent `#262626` on press, the Geist font, and cards with a 1dp border. The
+home is signed "powered by gadfaria".
 
 ## Requirements
 
@@ -55,8 +58,10 @@ app/src/main/java/com/gadfaria/nim/
 ├─ PinShortcutActivity.kt  # handles pin shortcut requests
 ├─ NimViewModel.kt
 ├─ data/                   # LauncherApps, search, DataStore, wallpaper
-└─ ui/                     # home, drawer, menu, settings, theme
+└─ ui/                     # home, drawer, menu, settings, card, theme
 ```
+
+Geist is licensed under the SIL Open Font License ([GEIST_LICENSE.txt](GEIST_LICENSE.txt)).
 
 Design decisions and the pitfalls found along the way are in
 [PLAN.md](PLAN.md).

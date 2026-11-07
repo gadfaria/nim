@@ -10,10 +10,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import com.gadfaria.nim.ui.theme.NimForegroundMuted
-
-/** Width reserved for the badge on EVERY row, badged or not. */
-val WorkBadgeSlot = 22.dp
+import com.gadfaria.nim.ui.theme.MutedForeground
 
 /**
  * Work profile badge: a small drawn briefcase, not an app icon.
@@ -33,21 +30,21 @@ fun WorkBadge(modifier: Modifier = Modifier) {
 
         // handle
         drawLine(
-            color = NimForegroundMuted,
+            color = MutedForeground,
             start = Offset(w * 0.33f, bodyTop),
             end = Offset(w * 0.33f, h * 0.16f),
             strokeWidth = stroke,
             cap = StrokeCap.Round,
         )
         drawLine(
-            color = NimForegroundMuted,
+            color = MutedForeground,
             start = Offset(w * 0.67f, bodyTop),
             end = Offset(w * 0.67f, h * 0.16f),
             strokeWidth = stroke,
             cap = StrokeCap.Round,
         )
         drawLine(
-            color = NimForegroundMuted,
+            color = MutedForeground,
             start = Offset(w * 0.33f, h * 0.16f),
             end = Offset(w * 0.67f, h * 0.16f),
             strokeWidth = stroke,
@@ -56,7 +53,7 @@ fun WorkBadge(modifier: Modifier = Modifier) {
 
         // body
         drawRoundRect(
-            color = NimForegroundMuted,
+            color = MutedForeground,
             topLeft = Offset(stroke / 2, bodyTop),
             size = Size(w - stroke, h - bodyTop - stroke / 2),
             cornerRadius = CornerRadius(stroke * 1.6f),

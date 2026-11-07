@@ -22,10 +22,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.gadfaria.nim.data.AppInfo
-import com.gadfaria.nim.ui.theme.NimForegroundMuted
+import com.gadfaria.nim.ui.theme.Foreground
+import com.gadfaria.nim.ui.theme.MutedForeground
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -70,29 +75,57 @@ fun HomeScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 28.dp),
+            .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.Start,
     ) {
         // Clock in the top third, favorites at the bottom: that's where the
         // thumb reaches without repositioning the hand.
         Spacer(Modifier.weight(1f))
 
-        Clock()
+        Column(Modifier.padding(horizontal = CardTextInset)) { Clock() }
 
         Spacer(Modifier.weight(2f))
 
-        favorites.forEach { app ->
-            AppRow(
-                app = app,
-                // Everything here is a favorite by definition: the dot would be noise.
-                isFavorite = false,
-                onLaunch = onLaunch,
-                onOpenMenu = onOpenMenu,
-            )
+        // No favorites, no card: an empty frame would be the only thing on screen.
+        if (favorites.isNotEmpty()) {
+            // Borderless and without press highlight: on the home the
+            // favorites read as a plain list under their label.
+            NimCard(bordered = false) {
+                GroupLabel("Favoritos")
+                favorites.forEach { app ->
+                    AppRow(
+                        app = app,
+                        // Everything here is a favorite by definition: the dot would be noise.
+                        isFavorite = false,
+                        onLaunch = onLaunch,
+                        onOpenMenu = onOpenMenu,
+                        highlightOnPress = false,
+                    )
+                }
+            }
+            Spacer(Modifier.height(16.dp))
         }
 
-        Spacer(Modifier.height(24.dp))
+        Signature()
+
+        Spacer(Modifier.height(16.dp))
     }
+}
+
+/** Author credit, quiet like a sidebar footer: muted, with the nick a step brighter. */
+@Composable
+private fun Signature() {
+    Text(
+        text = buildAnnotatedString {
+            append("powered by ")
+            withStyle(SpanStyle(color = Foreground, fontWeight = FontWeight.Medium)) {
+                append("gadfaria")
+            }
+        },
+        style = MaterialTheme.typography.labelMedium,
+        color = MutedForeground,
+        modifier = Modifier.padding(horizontal = CardTextInset),
+    )
 }
 
 @Composable
@@ -112,11 +145,11 @@ private fun Clock() {
     Text(
         text = now.format(hourFormat),
         style = MaterialTheme.typography.displayLarge,
-        color = MaterialTheme.colorScheme.onBackground,
+        color = Foreground,
     )
     Text(
         text = now.format(dateFormat),
         style = MaterialTheme.typography.bodyLarge,
-        color = NimForegroundMuted,
+        color = MutedForeground,
     )
 }

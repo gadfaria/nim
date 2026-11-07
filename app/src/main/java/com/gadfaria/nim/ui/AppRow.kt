@@ -3,8 +3,9 @@ package com.gadfaria.nim.ui
 import android.graphics.Rect
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,7 +23,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gadfaria.nim.data.AppInfo
-import com.gadfaria.nim.ui.theme.NimForegroundMuted
+import com.gadfaria.nim.ui.theme.Foreground
+import com.gadfaria.nim.ui.theme.MutedForeground
 
 /**
  * An app row. Used by the drawer and the home favorites — in both, a tap
@@ -36,17 +38,22 @@ fun AppRow(
     onLaunch: (AppInfo, Rect?) -> Unit,
     onOpenMenu: (AppInfo, Rect?) -> Unit,
     modifier: Modifier = Modifier,
+    highlightOnPress: Boolean = true,
 ) {
     // Kept in a var instead of state: it's only read on click, and making it
     // state would recompose the row on every scroll.
     var coordinates: LayoutCoordinates? = remember { null }
     val haptics = LocalHapticFeedback.current
+    val interaction = remember { MutableInteractionSource() }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .onGloballyPositioned { coordinates = it }
+            .then(if (highlightOnPress) Modifier.pressHighlight(interaction) else Modifier)
             .combinedClickable(
+                interactionSource = interaction,
+                indication = null,
                 // The opening animation starts where the finger touched, not
                 // from the center of the screen.
                 onClick = { onLaunch(app, coordinates?.launchBounds()) },
@@ -55,33 +62,33 @@ fun AppRow(
                     onOpenMenu(app, coordinates?.launchBounds())
                 },
             )
-            .padding(vertical = 14.dp),
+            .padding(horizontal = ItemPadding, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // The badge goes in front, but its space is reserved on EVERY row:
-        // without it, work app names would be shifted right of the others and
-        // the column would lose its alignment.
-        Box(Modifier.width(WorkBadgeSlot)) {
-            if (app.isWork) WorkBadge()
-        }
-
         Text(
             text = app.label,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = Foreground,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false),
         )
 
+        // Badge and dot go after the label, so every name starts on the same
+        // column as the search field and the card labels.
+        if (app.isWork) {
+            Spacer(Modifier.width(10.dp))
+            WorkBadge()
+        }
+
         // The favorite marker is a dot, not an icon: it's the only way to
         // answer "is this one already on the home?" without betraying the
-        // no-icons decision. It goes after the label so the column stays aligned.
+        // no-icons decision.
         if (isFavorite) {
             Text(
                 text = "  ·",
                 style = MaterialTheme.typography.titleMedium,
-                color = NimForegroundMuted,
+                color = MutedForeground,
             )
         }
     }

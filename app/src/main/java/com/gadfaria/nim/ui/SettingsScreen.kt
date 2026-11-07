@@ -1,6 +1,6 @@
 package com.gadfaria.nim.ui
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,7 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -31,11 +33,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.gadfaria.nim.data.AppInfo
-import com.gadfaria.nim.ui.theme.NimForegroundMuted
+import com.gadfaria.nim.ui.theme.Accent
+import com.gadfaria.nim.ui.theme.Foreground
+import com.gadfaria.nim.ui.theme.MutedForeground
+import com.gadfaria.nim.ui.theme.RadiusMd
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-private val RowHeight = 56.dp
+private val RowHeight = 48.dp
 
 @Composable
 fun SettingsScreen(
@@ -47,47 +52,45 @@ fun SettingsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 28.dp, vertical = 32.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 32.dp),
     ) {
         Text(
             text = "Configurações",
             style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = Foreground,
+            modifier = Modifier.padding(horizontal = CardTextInset),
         )
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
 
-        Text(
-            text = "Favoritos",
-            style = MaterialTheme.typography.bodyLarge,
-            color = NimForegroundMuted,
-        )
+        NimCard {
+            GroupLabel("Favoritos")
 
-        Spacer(Modifier.height(8.dp))
-
-        if (favorites.isEmpty()) {
-            Text(
-                text = "Nenhum ainda. Segure um app na gaveta para favoritar.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = NimForegroundMuted,
-                modifier = Modifier.padding(vertical = 14.dp),
-            )
-        } else {
-            ReorderableFavorites(favorites = favorites, onReorder = onReorder)
-
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = "Segure e arraste para reordenar.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = NimForegroundMuted,
-            )
+            if (favorites.isEmpty()) {
+                Description("Nenhum ainda. Segure um app na gaveta para favoritar.")
+            } else {
+                ReorderableFavorites(favorites = favorites, onReorder = onReorder)
+                Separator()
+                Description("Segure e arraste para reordenar.")
+            }
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(16.dp))
 
         WallpaperSection(onApply = onApplyWallpaper)
     }
+}
+
+/** CardDescription: muted body text inside a card. */
+@Composable
+private fun Description(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyLarge,
+        color = MutedForeground,
+        modifier = Modifier.padding(horizontal = ItemPadding, vertical = 8.dp),
+    )
 }
 
 /**
@@ -99,43 +102,36 @@ fun SettingsScreen(
 @Composable
 private fun WallpaperSection(onApply: suspend () -> Boolean) {
     val scope = rememberCoroutineScope()
-    val noRipple = remember { MutableInteractionSource() }
     // null = not tapped yet; otherwise, the result of the last attempt.
     var applied by remember { mutableStateOf<Boolean?>(null) }
     var busy by remember { mutableStateOf(false) }
 
-    Text(
-        text = "Papel de parede",
-        style = MaterialTheme.typography.bodyLarge,
-        color = NimForegroundMuted,
-    )
+    NimCard {
+        GroupLabel("Papel de parede")
 
-    Text(
-        text = "Usar o fundo do Nim na tela inicial",
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onBackground,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(interactionSource = noRipple, indication = null, enabled = !busy) {
+        NimItem(
+            text = "Usar o fundo do Nim na tela inicial",
+            enabled = !busy,
+            onClick = {
                 busy = true
                 scope.launch {
                     applied = onApply()
                     busy = false
                 }
-            }
-            .padding(vertical = 14.dp),
-    )
+            },
+        )
 
-    Text(
-        text = when (applied) {
-            null -> "Os apps recentes mostram o papel de parede por trás. " +
-                "Isto troca só o da tela inicial; o da tela de bloqueio fica."
-            true -> "Pronto. Para voltar, escolha outro papel de parede pelo Android."
-            false -> "O Android não deixou trocar o papel de parede."
-        },
-        style = MaterialTheme.typography.bodyLarge,
-        color = NimForegroundMuted,
-    )
+        Separator()
+
+        Description(
+            when (applied) {
+                null -> "Os apps recentes mostram o papel de parede por trás. " +
+                    "Isto troca só o da tela inicial; o da tela de bloqueio fica."
+                true -> "Pronto. Para voltar, escolha outro papel de parede pelo Android."
+                false -> "O Android não deixou trocar o papel de parede."
+            },
+        )
+    }
 }
 
 /**
@@ -176,21 +172,19 @@ private fun ReorderableFavorites(
                 Text(
                     text = app.label,
                     style = MaterialTheme.typography.titleMedium,
-                    // Normally all lit. During a drag the others dim, visually
-                    // isolating the one in hand.
-                    color = if (draggingIndex == -1 || dragging) {
-                        MaterialTheme.colorScheme.onBackground
-                    } else {
-                        NimForegroundMuted
-                    },
+                    // Normally all lit. During a drag the others dim and the one
+                    // in hand gets the accent background, as if lifted.
+                    color = if (draggingIndex == -1 || dragging) Foreground else MutedForeground,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(RowHeight)
-                        .wrapContentHeight()
                         .zIndex(if (dragging) 1f else 0f)
                         .graphicsLayer { translationY = if (dragging) dragOffset else 0f }
+                        .background(if (dragging) Accent else Color.Transparent, RadiusMd)
+                        .wrapContentHeight()
+                        .padding(horizontal = ItemPadding)
                         .pointerInput(app.key) {
                             detectDragGesturesAfterLongPress(
                                 onDragStart = {
