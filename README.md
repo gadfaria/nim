@@ -5,6 +5,13 @@ favorites and an A–Z drawer with search.
 
 Built with Kotlin + Jetpack Compose, for personal use.
 
+<p>
+  <img src="docs/screenshots/home.png" alt="Home: clock, favorites and signature" width="200">
+  <img src="docs/screenshots/drawer.png" alt="Drawer filtered by search" width="200">
+  <img src="docs/screenshots/menu.png" alt="Long-press menu" width="200">
+  <img src="docs/screenshots/settings.png" alt="Settings" width="200">
+</p>
+
 ## Features
 
 - **Home** with clock, date and favorites at the bottom, within thumb reach.
