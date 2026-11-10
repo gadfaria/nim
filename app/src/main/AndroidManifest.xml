@@ -45,7 +45,8 @@
 
         <!-- Detail #3: with nothing handling CONFIRM_PIN_SHORTCUT,
              isRequestPinShortcutSupported() returns false and Chrome hides
-             "Install app"/"Add to home screen" for PWAs. -->
+             "Install app"/"Add to home screen" for PWAs. Exported because the
+             system is what starts it; it confirms with the user before accepting. -->
         <activity
             android:name=".PinShortcutActivity"
             android:theme="@style/Theme.Nim.Translucent"

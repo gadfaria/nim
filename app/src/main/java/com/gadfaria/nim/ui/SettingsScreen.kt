@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,9 +30,11 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.gadfaria.nim.R
 import com.gadfaria.nim.data.AppInfo
 import com.gadfaria.nim.ui.theme.Accent
 import com.gadfaria.nim.ui.theme.Foreground
@@ -56,7 +59,7 @@ fun SettingsScreen(
             .padding(horizontal = 16.dp, vertical = 32.dp),
     ) {
         Text(
-            text = "Configurações",
+            text = stringResource(R.string.settings_title),
             style = MaterialTheme.typography.headlineMedium,
             color = Foreground,
             modifier = Modifier.padding(horizontal = CardTextInset),
@@ -65,14 +68,14 @@ fun SettingsScreen(
         Spacer(Modifier.height(24.dp))
 
         NimCard {
-            GroupLabel("Favoritos")
+            GroupLabel(stringResource(R.string.favorites_label))
 
             if (favorites.isEmpty()) {
-                Description("Nenhum ainda. Segure um app na gaveta para favoritar.")
+                Description(stringResource(R.string.settings_favorites_empty))
             } else {
                 ReorderableFavorites(favorites = favorites, onReorder = onReorder)
                 Separator()
-                Description("Segure e arraste para reordenar.")
+                Description(stringResource(R.string.settings_favorites_hint))
             }
         }
 
@@ -107,10 +110,10 @@ private fun WallpaperSection(onApply: suspend () -> Boolean) {
     var busy by remember { mutableStateOf(false) }
 
     NimCard {
-        GroupLabel("Papel de parede")
+        GroupLabel(stringResource(R.string.wallpaper_label))
 
         NimItem(
-            text = "Usar o fundo do Nim na tela inicial",
+            text = stringResource(R.string.wallpaper_apply),
             enabled = !busy,
             onClick = {
                 busy = true
@@ -124,12 +127,13 @@ private fun WallpaperSection(onApply: suspend () -> Boolean) {
         Separator()
 
         Description(
-            when (applied) {
-                null -> "Os apps recentes mostram o papel de parede por trás. " +
-                    "Isto troca só o da tela inicial; o da tela de bloqueio fica."
-                true -> "Pronto. Para voltar, escolha outro papel de parede pelo Android."
-                false -> "O Android não deixou trocar o papel de parede."
-            },
+            stringResource(
+                when (applied) {
+                    null -> R.string.wallpaper_description
+                    true -> R.string.wallpaper_done
+                    false -> R.string.wallpaper_denied
+                },
+            ),
         )
     }
 }
@@ -168,6 +172,10 @@ private fun ReorderableFavorites(
             // crossing.
             key(app.key) {
                 val dragging = index == draggingIndex
+                // pointerInput is keyed by the app, so its block outlives a
+                // reorder: a plain `index` captured there would still be the
+                // row's old position on the next drag.
+                val currentIndex by rememberUpdatedState(index)
 
                 Text(
                     text = app.label,
@@ -188,7 +196,7 @@ private fun ReorderableFavorites(
                         .pointerInput(app.key) {
                             detectDragGesturesAfterLongPress(
                                 onDragStart = {
-                                    draggingIndex = index
+                                    draggingIndex = currentIndex
                                     dragOffset = 0f
                                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                 },

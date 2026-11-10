@@ -39,8 +39,8 @@ home is signed "powered by gadfaria".
 ## Build and install
 
 ```sh
-./gradlew :app:assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:assembleRelease
+adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
 Then press HOME on the device and pick Nim, or set it through adb:

@@ -22,18 +22,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.gadfaria.nim.R
 import com.gadfaria.nim.data.AppInfo
 import com.gadfaria.nim.ui.theme.Foreground
 import com.gadfaria.nim.ui.theme.MutedForeground
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * Clock driven by ACTION_TIME_TICK (the system sends it every minute).
@@ -91,7 +93,7 @@ fun HomeScreen(
             // Borderless and without press highlight: on the home the
             // favorites read as a plain list under their label.
             NimCard(bordered = false) {
-                GroupLabel("Favoritos")
+                GroupLabel(stringResource(R.string.favorites_label))
                 favorites.forEach { app ->
                     AppRow(
                         app = app,
@@ -132,7 +134,7 @@ private fun Signature() {
 private fun Clock() {
     val now by rememberCurrentTime()
     val context = LocalContext.current
-    val locale = Locale.getDefault()
+    val locale = LocalLocale.current.platformLocale
 
     // 12h or 24h is the user's system preference, not the app's — hardcoding
     // "HH:mm" makes the launcher clock disagree with the status bar clock.

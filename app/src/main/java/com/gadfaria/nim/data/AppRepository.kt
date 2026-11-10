@@ -6,16 +6,19 @@ import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.pm.ShortcutInfo
 import android.graphics.Rect
-import android.net.Uri
 import android.os.Handler
 import android.os.Process
 import android.os.Looper
 import android.os.UserHandle
 import android.os.UserManager
+import androidx.core.net.toUri
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import java.text.Collator
 
 /**
@@ -64,31 +67,40 @@ class AppRepository(context: Context) {
      * rename. A launcher that only reads it in onCreate shows ghost apps.
      */
     val apps: Flow<List<AppInfo>> = callbackFlow {
-        fun push() = trySend(load())
+        // The callbacks only signal: the reload itself happens downstream, off
+        // the main thread.
+        fun changed() { trySend(Unit) }
 
         val callback = object : LauncherApps.Callback() {
-            override fun onPackageAdded(packageName: String?, user: UserHandle?) = Unit.also { push() }
-            override fun onPackageRemoved(packageName: String?, user: UserHandle?) = Unit.also { push() }
-            override fun onPackageChanged(packageName: String?, user: UserHandle?) = Unit.also { push() }
+            override fun onPackageAdded(packageName: String?, user: UserHandle?) = changed()
+            override fun onPackageRemoved(packageName: String?, user: UserHandle?) = changed()
+            override fun onPackageChanged(packageName: String?, user: UserHandle?) = changed()
             override fun onPackagesAvailable(
                 packageNames: Array<out String>?, user: UserHandle?, replacing: Boolean,
-            ) = Unit.also { push() }
+            ) = changed()
             override fun onPackagesUnavailable(
                 packageNames: Array<out String>?, user: UserHandle?, replacing: Boolean,
-            ) = Unit.also { push() }
+            ) = changed()
             // Fires when a shortcut is pinned (PinShortcutActivity accepted it),
             // removed or disabled by its owner app.
             override fun onShortcutsChanged(
                 packageName: String, shortcuts: MutableList<ShortcutInfo>, user: UserHandle,
-            ) = Unit.also { push() }
+            ) = changed()
         }
 
-        // Explicit Handler: the callback needs a Looper and the coroutine may be
-        // on a dispatcher that has none.
+        // Explicit Handler: the callback needs a Looper and this runs on a
+        // dispatcher that has none.
         launcherApps.registerCallback(callback, Handler(Looper.getMainLooper()))
-        push()
+        changed()
         awaitClose { launcherApps.unregisterCallback(callback) }
-    }.conflate()
+    }
+        // An app update fires several callbacks in a row: conflated, the burst
+        // costs one reload instead of one per callback.
+        .conflate()
+        .map { load() }
+        // Reading every profile and every label is hundreds of ms of binder
+        // calls — on the main thread that's a frozen home on every return.
+        .flowOn(Dispatchers.IO)
 
     private fun load(): List<AppInfo> =
         launcherApps.profiles
@@ -133,7 +145,7 @@ class AppRepository(context: Context) {
             .filter { it.isEnabled }
             .map { shortcut ->
                 AppInfo(
-                    label = (shortcut.shortLabel ?: shortcut.longLabel ?: shortcut.id).toString(),
+                    label = shortcut.displayLabel(),
                     // Without an activity, a package-only ComponentName is enough:
                     // the app info screen only looks at the package.
                     componentName = shortcut.activity ?: ComponentName(shortcut.`package`, ""),
@@ -178,7 +190,7 @@ class AppRepository(context: Context) {
         runCatching {
             val intent = Intent(
                 Intent.ACTION_DELETE,
-                Uri.parse("package:${app.componentName.packageName}"),
+                "package:${app.componentName.packageName}".toUri(),
             )
                 .putExtra(Intent.EXTRA_USER, app.user)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -205,3 +217,6 @@ class AppRepository(context: Context) {
         }
     }
 }
+
+/** The name a shortcut is listed under: its short label, falling back to the long one and the id. */
+fun ShortcutInfo.displayLabel(): String = (shortLabel ?: longLabel ?: id).toString()

@@ -19,6 +19,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.node.Ref
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,26 +41,26 @@ fun AppRow(
     modifier: Modifier = Modifier,
     highlightOnPress: Boolean = true,
 ) {
-    // Kept in a var instead of state: it's only read on click, and making it
+    // A plain holder instead of state: it's only read on click, and making it
     // state would recompose the row on every scroll.
-    var coordinates: LayoutCoordinates? = remember { null }
+    val coordinates = remember { Ref<LayoutCoordinates>() }
     val haptics = LocalHapticFeedback.current
     val interaction = remember { MutableInteractionSource() }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .onGloballyPositioned { coordinates = it }
+            .onGloballyPositioned { coordinates.value = it }
             .then(if (highlightOnPress) Modifier.pressHighlight(interaction) else Modifier)
             .combinedClickable(
                 interactionSource = interaction,
                 indication = null,
                 // The opening animation starts where the finger touched, not
                 // from the center of the screen.
-                onClick = { onLaunch(app, coordinates?.launchBounds()) },
+                onClick = { onLaunch(app, coordinates.value?.launchBounds()) },
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onOpenMenu(app, coordinates?.launchBounds())
+                    onOpenMenu(app, coordinates.value?.launchBounds())
                 },
             )
             .padding(horizontal = ItemPadding, vertical = 12.dp),

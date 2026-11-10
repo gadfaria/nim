@@ -16,11 +16,12 @@ android {
     }
 
     buildTypes {
-        debug {
-            // Personal-use launcher: the debug build is the one that stays on the device.
-            isMinifyEnabled = false
-        }
         release {
+            // Personal-use launcher: this is the build that stays on the device.
+            // Compose in a debuggable, unshrunk build is visibly slower, and a
+            // launcher pays that on every return home. Signed with the debug key
+            // so it installs straight from the terminal, over a debug build too.
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

@@ -405,8 +405,8 @@ hangs. To remove it: `adb shell pm remove-user 10`.
   Compose BOM 2026.08.00 · `compileSdk`/`targetSdk` 37 · `minSdk` 26 · Java 17.
 - Build and install from the terminal:
   ```sh
-  ./gradlew :app:assembleDebug
-  adb install -r app/build/outputs/apk/debug/app-debug.apk
+  ./gradlew :app:assembleRelease
+  adb install -r app/build/outputs/apk/release/app-release.apk
   adb shell cmd package set-home-activity com.gadfaria.nim/.MainActivity
   ```
 - To give the emulator its system launcher back:

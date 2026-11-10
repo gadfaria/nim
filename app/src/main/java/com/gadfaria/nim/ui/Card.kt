@@ -15,11 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gadfaria.nim.ui.theme.Accent
@@ -89,14 +88,11 @@ fun Modifier.pressHighlight(
     interactionSource: InteractionSource,
     destructive: Boolean = false,
 ): Modifier {
-    val pressed by interactionSource.collectIsPressedAsState()
-    val color = when {
-        !pressed -> Color.Transparent
-        // bg-destructive/10, as in shadcn's destructive menu item.
-        destructive -> Destructive.copy(alpha = 0.1f)
-        else -> Accent
-    }
-    return clip(RadiusMd).background(color)
+    val pressed = interactionSource.collectIsPressedAsState()
+    // bg-destructive/10, as in shadcn's destructive menu item.
+    val color = if (destructive) Destructive.copy(alpha = 0.1f) else Accent
+    // Read in the draw phase: a press repaints the row instead of recomposing it.
+    return clip(RadiusMd).drawBehind { if (pressed.value) drawRect(color) }
 }
 
 /** SidebarMenuButton / DropdownMenuItem: a tappable line of text. */

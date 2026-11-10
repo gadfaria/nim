@@ -20,8 +20,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.gadfaria.nim.R
 import com.gadfaria.nim.ui.theme.Foreground
 import com.gadfaria.nim.ui.theme.InputBorder
 import com.gadfaria.nim.ui.theme.MutedForeground
@@ -69,7 +71,11 @@ fun SearchField(
                     .padding(horizontal = ItemPadding, vertical = 10.dp),
             ) {
                 if (query.isEmpty()) {
-                    Text(text = "buscar", style = style, color = MutedForeground)
+                    Text(
+                        text = stringResource(R.string.search_hint),
+                        style = style,
+                        color = MutedForeground,
+                    )
                 }
                 field()
             }

@@ -174,7 +174,7 @@ fun NimApp(
                     fadeIn(tween(200, delayMillis = 100)) togetherWith fadeOut(tween(140))
             }
         },
-        label = "telas",
+        label = "screens",
     ) { current ->
         when (current) {
             Screen.DRAWER -> Box(

@@ -57,6 +57,8 @@ data class AppInfo(
 
 /**
  * Lowercase and accent-free, so "cam" finds "Câmera" and "acoes" finds "Ações".
+ * Locale.ROOT, not the device's: in Turkish "I" lowercases to a dotless "ı" and
+ * "insta" would stop finding "Instagram".
  *
  * NFD splits the letter from the accent into two characters; then dropping the
  * diacritics (Unicode category Mn) leaves the base letter.
@@ -64,6 +66,6 @@ data class AppInfo(
 fun normalizeForSearch(text: String): String =
     Normalizer.normalize(text, Normalizer.Form.NFD)
         .replace(DIACRITICS, "")
-        .lowercase(Locale.getDefault())
+        .lowercase(Locale.ROOT)
 
 private val DIACRITICS = "\\p{Mn}+".toRegex()

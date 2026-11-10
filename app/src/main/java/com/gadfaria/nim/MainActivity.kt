@@ -17,7 +17,6 @@ import com.gadfaria.nim.ui.NimApp
 import com.gadfaria.nim.ui.theme.Background
 import com.gadfaria.nim.ui.theme.NimTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 
 class MainActivity : ComponentActivity() {
 
@@ -52,7 +51,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     NimApp(
                         viewModel = viewModel,
-                        homePresses = homePressed.asSharedFlow(),
+                        homePresses = homePressed,
                     )
                 }
             }

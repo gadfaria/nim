@@ -12,9 +12,8 @@
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <!-- PinShortcutActivity's invisible screen: it accepts the request and closes
-         without drawing or animating anything, so the user doesn't even notice
-         it opened. -->
+    <!-- PinShortcutActivity's window: see-through and unanimated, so the
+         confirmation card reads as a sheet over the app that asked. -->
     <style name="Theme.Nim.Translucent" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>

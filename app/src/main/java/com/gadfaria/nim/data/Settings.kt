@@ -21,35 +21,22 @@ class Settings(private val context: Context) {
      * Stored as a list, not a Set: the order is the favoriting order, and it's
      * what the home shows. A preferences Set would lose that order on every
      * read.
-     *
-     * `\n` as a separator is safe — the key is a flattened ComponentName plus
-     * the profile serial, and neither contains a line break.
      */
     private val favoritesKey = stringPreferencesKey("favorites")
 
     val favoriteKeys: Flow<List<String>> = context.dataStore.data.map { prefs ->
-        prefs[favoritesKey]?.split(SEPARATOR)?.filter { it.isNotEmpty() } ?: emptyList()
+        decodeFavorites(prefs[favoritesKey])
     }
 
     /** Writes the whole order at once — that's what drag-to-reorder produces. */
     suspend fun setFavorites(keys: List<String>) {
-        context.dataStore.edit { prefs ->
-            prefs[favoritesKey] = keys.joinToString(SEPARATOR)
-        }
+        context.dataStore.edit { prefs -> prefs[favoritesKey] = encodeFavorites(keys) }
     }
 
     suspend fun toggleFavorite(key: String) {
         context.dataStore.edit { prefs ->
-            val current = prefs[favoritesKey]
-                ?.split(SEPARATOR)
-                ?.filter { it.isNotEmpty() }
-                .orEmpty()
-            val updated = if (key in current) current - key else current + key
-            prefs[favoritesKey] = updated.joinToString(SEPARATOR)
+            prefs[favoritesKey] =
+                encodeFavorites(toggleFavorite(decodeFavorites(prefs[favoritesKey]), key))
         }
-    }
-
-    private companion object {
-        const val SEPARATOR = "\n"
     }
 }
