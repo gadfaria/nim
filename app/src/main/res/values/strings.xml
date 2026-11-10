@@ -1,26 +1,26 @@
 <resources>
-    <string name="app_name">Nim</string>
+    <string name="app_name" translatable="false">Nim</string>
 
-    <string name="favorites_label">Favoritos</string>
-    <string name="search_hint">buscar</string>
+    <string name="favorites_label">Favorites</string>
+    <string name="search_hint">search</string>
 
-    <string name="menu_favorite">Favoritar</string>
-    <string name="menu_unfavorite">Remover dos favoritos</string>
-    <string name="menu_app_info">Informações do app</string>
-    <string name="menu_uninstall">Desinstalar</string>
-    <string name="menu_remove_shortcut">Remover atalho</string>
+    <string name="menu_favorite">Add to favorites</string>
+    <string name="menu_unfavorite">Remove from favorites</string>
+    <string name="menu_app_info">App info</string>
+    <string name="menu_uninstall">Uninstall</string>
+    <string name="menu_remove_shortcut">Remove shortcut</string>
 
-    <string name="settings_title">Configurações</string>
-    <string name="settings_favorites_empty">Nenhum ainda. Segure um app na gaveta para favoritar.</string>
-    <string name="settings_favorites_hint">Segure e arraste para reordenar.</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_favorites_empty">None yet. Hold an app in the drawer to add it to favorites.</string>
+    <string name="settings_favorites_hint">Hold and drag to reorder.</string>
 
-    <string name="wallpaper_label">Papel de parede</string>
-    <string name="wallpaper_apply">Usar o fundo do Nim na tela inicial</string>
-    <string name="wallpaper_description">Os apps recentes mostram o papel de parede por trás. Isto troca só o da tela inicial; o da tela de bloqueio fica.</string>
-    <string name="wallpaper_done">Pronto. Para voltar, escolha outro papel de parede pelo Android.</string>
-    <string name="wallpaper_denied">O Android não deixou trocar o papel de parede.</string>
+    <string name="wallpaper_label">Wallpaper</string>
+    <string name="wallpaper_apply">Use Nim\'s background on the home screen</string>
+    <string name="wallpaper_description">Recent apps show the wallpaper behind them. This changes only the home screen one; the lock screen keeps its own.</string>
+    <string name="wallpaper_done">Done. To go back, pick another wallpaper through Android.</string>
+    <string name="wallpaper_denied">Android didn\'t allow changing the wallpaper.</string>
 
-    <string name="pin_requested_by">Atalho pedido por %1$s. Ele aparece na gaveta, junto com os apps.</string>
-    <string name="pin_accept">Adicionar atalho</string>
-    <string name="pin_cancel">Cancelar</string>
+    <string name="pin_requested_by">Shortcut requested by %1$s. It shows up in the drawer, next to the apps.</string>
+    <string name="pin_accept">Add shortcut</string>
+    <string name="pin_cancel">Cancel</string>
 </resources>

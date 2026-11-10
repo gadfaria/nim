@@ -1,0 +1,24 @@
+<resources>
+    <string name="favorites_label">Favoritos</string>
+    <string name="search_hint">buscar</string>
+
+    <string name="menu_favorite">Favoritar</string>
+    <string name="menu_unfavorite">Remover dos favoritos</string>
+    <string name="menu_app_info">Informações do app</string>
+    <string name="menu_uninstall">Desinstalar</string>
+    <string name="menu_remove_shortcut">Remover atalho</string>
+
+    <string name="settings_title">Configurações</string>
+    <string name="settings_favorites_empty">Nenhum ainda. Segure um app na gaveta para favoritar.</string>
+    <string name="settings_favorites_hint">Segure e arraste para reordenar.</string>
+
+    <string name="wallpaper_label">Papel de parede</string>
+    <string name="wallpaper_apply">Usar o fundo do Nim na tela inicial</string>
+    <string name="wallpaper_description">Os apps recentes mostram o papel de parede por trás. Isto troca só o da tela inicial; o da tela de bloqueio fica.</string>
+    <string name="wallpaper_done">Pronto. Para voltar, escolha outro papel de parede pelo Android.</string>
+    <string name="wallpaper_denied">O Android não deixou trocar o papel de parede.</string>
+
+    <string name="pin_requested_by">Atalho pedido por %1$s. Ele aparece na gaveta, junto com os apps.</string>
+    <string name="pin_accept">Adicionar atalho</string>
+    <string name="pin_cancel">Cancelar</string>
+</resources>
